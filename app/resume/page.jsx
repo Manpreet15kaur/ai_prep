@@ -6,11 +6,11 @@ import { Upload, FileText, CheckCircle, AlertCircle, TrendingUp, Target } from '
 import Link from 'next/link'
 
 export default function ResumeAnalyzerPage() {
-  const [file, setFile] = useState<File | null>(null)
+  const [file, setFile] = useState(null)
   const [analyzing, setAnalyzing] = useState(false)
-  const [results, setResults] = useState<any>(null)
+  const [results, setResults] = useState(null)
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0])
     }
@@ -28,6 +28,9 @@ export default function ResumeAnalyzerPage() {
     setTimeout(() => {
       setResults({
         atsScore: 78,
+        matchedKeywords: ['JavaScript', 'React', 'Node.js', 'MongoDB', 'REST APIs', 'Git', 'Agile'],
+        missingKeywords: ['Docker', 'Kubernetes', 'CI/CD', 'AWS', 'Microservices', 'Cloud Architecture'],
+        missingSkills: ['Container orchestration', 'Cloud deployment', 'DevOps practices'],
         strengths: [
           'Strong technical skills section',
           'Quantified achievements',
@@ -40,7 +43,6 @@ export default function ResumeAnalyzerPage() {
           'Limited leadership examples',
           'No certifications listed'
         ],
-        missingKeywords: ['Agile', 'CI/CD', 'Microservices', 'Cloud Architecture'],
         improvements: [
           { area: 'Experience Section', suggestion: 'Add more action verbs like "Led", "Architected", "Optimized"', priority: 'High' },
           { area: 'Skills', suggestion: 'Include trending technologies like Kubernetes, GraphQL', priority: 'Medium' },
@@ -180,13 +182,13 @@ export default function ResumeAnalyzerPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white rounded-xl p-4 card-glow border border-pink/10">
                   <CheckCircle className="text-mint mb-2" size={24} />
-                  <p className="text-2xl font-bold">{results.strengths.length}</p>
-                  <p className="text-sm text-gray-600">Strengths</p>
+                  <p className="text-2xl font-bold">{results.matchedKeywords?.length || 0}</p>
+                  <p className="text-sm text-gray-600">Matched Keywords</p>
                 </div>
                 <div className="bg-white rounded-xl p-4 card-glow border border-pink/10">
                   <AlertCircle className="text-coral mb-2" size={24} />
-                  <p className="text-2xl font-bold">{results.weaknesses.length}</p>
-                  <p className="text-sm text-gray-600">Areas to Improve</p>
+                  <p className="text-2xl font-bold">{results.missingKeywords?.length || 0}</p>
+                  <p className="text-sm text-gray-600">Missing Keywords</p>
                 </div>
               </div>
             </motion.div>
@@ -208,7 +210,7 @@ export default function ResumeAnalyzerPage() {
                 <h3 className="font-semibold text-xl">Resume Strengths</h3>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
-                {results.strengths.map((strength: string, index: number) => (
+                {results.strengths.map((strength, index) => (
                   <div key={index} className="flex items-start gap-3 p-4 bg-mint/20 rounded-xl">
                     <CheckCircle className="text-mint flex-shrink-0 mt-1" size={18} />
                     <p className="text-gray-700">{strength}</p>
@@ -224,7 +226,7 @@ export default function ResumeAnalyzerPage() {
                 <h3 className="font-semibold text-xl">Areas of Improvement</h3>
               </div>
               <div className="space-y-4">
-                {results.improvements.map((item: any, index: number) => (
+                {results.improvements.map((item, index) => (
                   <div key={index} className="p-5 bg-peach/10 rounded-xl border-l-4 border-coral">
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-semibold text-gray-800">{item.area}</h4>
@@ -242,21 +244,41 @@ export default function ResumeAnalyzerPage() {
               </div>
             </div>
 
+            {/* Matched Keywords */}
+            {results.matchedKeywords && results.matchedKeywords.length > 0 && (
+              <div className="bg-white rounded-2xl p-8 card-glow border border-pink/10">
+                <div className="flex items-center gap-3 mb-6">
+                  <CheckCircle className="text-mint" size={28} />
+                  <h3 className="font-semibold text-xl">Matched Keywords</h3>
+                </div>
+                <p className="text-gray-600 mb-4">These keywords from the job description are present in your resume:</p>
+                <div className="flex flex-wrap gap-3">
+                  {results.matchedKeywords.map((keyword, index) => (
+                    <span key={index} className="px-4 py-2 rounded-full bg-mint/30 text-gray-700 font-medium border border-mint/50">
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Missing Keywords */}
-            <div className="bg-white rounded-2xl p-8 card-glow border border-pink/10">
-              <div className="flex items-center gap-3 mb-6">
-                <Target className="text-purple" size={28} />
-                <h3 className="font-semibold text-xl">Missing Keywords</h3>
+            {results.missingKeywords && results.missingKeywords.length > 0 && (
+              <div className="bg-white rounded-2xl p-8 card-glow border border-pink/10">
+                <div className="flex items-center gap-3 mb-6">
+                  <Target className="text-coral" size={28} />
+                  <h3 className="font-semibold text-xl">Missing Keywords</h3>
+                </div>
+                <p className="text-gray-600 mb-4">Add these keywords to improve ATS compatibility:</p>
+                <div className="flex flex-wrap gap-3">
+                  {results.missingKeywords.map((keyword, index) => (
+                    <span key={index} className="px-4 py-2 rounded-full bg-coral/30 text-gray-700 font-medium border border-coral/50">
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <p className="text-gray-600 mb-4">Add these keywords to improve ATS compatibility:</p>
-              <div className="flex flex-wrap gap-3">
-                {results.missingKeywords.map((keyword: string, index: number) => (
-                  <span key={index} className="px-4 py-2 rounded-full bg-lavender/30 text-gray-700 font-medium">
-                    {keyword}
-                  </span>
-                ))}
-              </div>
-            </div>
+            )}
           </motion.div>
         )}
       </main>

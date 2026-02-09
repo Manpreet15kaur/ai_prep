@@ -116,7 +116,7 @@ export default function LandingPage() {
   )
 }
 
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
+function FeatureCard({ icon, title, description }) {
   return (
     <motion.div
       whileHover={{ y: -5 }}

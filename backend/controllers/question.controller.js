@@ -63,7 +63,7 @@ export const getAllTopics = async (req, res) => {
 export const generateAIQuestions = async (req, res) => {
   try {
     const { 
-      topic, 
+      topics,  // CHANGED: Now accepts array of topics
       experienceLevel, 
       questionTypes,
       subTopics,
@@ -71,16 +71,24 @@ export const generateAIQuestions = async (req, res) => {
       answerStyle
     } = req.body;
 
-    if (!topic || !experienceLevel || !questionTypes || questionTypes.length === 0) {
+    // CHANGED: Validate topics array
+    if (!topics || !Array.isArray(topics) || topics.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Topic, experience level, and question types are required'
+        message: 'At least one topic is required'
+      });
+    }
+
+    if (!experienceLevel || !questionTypes || questionTypes.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Experience level and question types are required'
       });
     }
 
     // Call AI service to generate questions with enhanced parameters
     const generatedQuestions = await generateQuestions({
-      topic,
+      topics,  // CHANGED: Pass topics array
       experienceLevel,
       questionTypes,
       subTopics: subTopics || [],

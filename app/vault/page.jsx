@@ -1,43 +1,54 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Plus, Edit2, Trash2, Bookmark, Filter } from 'lucide-react'
+import { Search, Edit2, Trash2, Bookmark } from 'lucide-react'
 import Link from 'next/link'
 
-const mockQuestions = [
-  { id: 1, question: 'Explain React hooks and their use cases', role: 'Frontend Developer', difficulty: 'Intermediate', topic: 'React', bookmarked: true, createdAt: '2024-02-01' },
-  { id: 2, question: 'Design a RESTful API for a social media platform', role: 'Backend Developer', difficulty: 'Advanced', topic: 'System Design', bookmarked: false, createdAt: '2024-02-03' },
-  { id: 3, question: 'What is the difference between SQL and NoSQL?', role: 'Full Stack Developer', difficulty: 'Beginner', topic: 'Databases', bookmarked: true, createdAt: '2024-02-05' },
-]
-
 export default function VaultPage() {
-  const [questions, setQuestions] = useState(mockQuestions)
+  const [questions, setQuestions] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterRole, setFilterRole] = useState('All')
   const [filterDifficulty, setFilterDifficulty] = useState('All')
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState(null)
   const [editText, setEditText] = useState('')
 
-  const deleteQuestion = (id: number) => {
-    setQuestions(prev => prev.filter(q => q.id !== id))
+  useEffect(() => {
+    loadSavedQuestions()
+  }, [])
+
+  const loadSavedQuestions = () => {
+    const saved = localStorage.getItem('savedQuestions')
+    if (saved) {
+      setQuestions(JSON.parse(saved))
+    }
   }
 
-  const toggleBookmark = (id: number) => {
-    setQuestions(prev => prev.map(q => 
+  const deleteQuestion = (id) => {
+    const updated = questions.filter(q => q.id !== id)
+    setQuestions(updated)
+    localStorage.setItem('savedQuestions', JSON.stringify(updated))
+  }
+
+  const toggleBookmark = (id) => {
+    const updated = questions.map(q => 
       q.id === id ? { ...q, bookmarked: !q.bookmarked } : q
-    ))
+    )
+    setQuestions(updated)
+    localStorage.setItem('savedQuestions', JSON.stringify(updated))
   }
 
-  const startEdit = (id: number, text: string) => {
+  const startEdit = (id, text) => {
     setEditingId(id)
     setEditText(text)
   }
 
-  const saveEdit = (id: number) => {
-    setQuestions(prev => prev.map(q => 
+  const saveEdit = (id) => {
+    const updated = questions.map(q => 
       q.id === id ? { ...q, question: editText } : q
-    ))
+    )
+    setQuestions(updated)
+    localStorage.setItem('savedQuestions', JSON.stringify(updated))
     setEditingId(null)
   }
 
@@ -79,14 +90,6 @@ export default function VaultPage() {
               <h2 className="text-4xl font-bold mb-2">My Interview Vault</h2>
               <p className="text-gray-600">{questions.length} questions saved</p>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 rounded-xl gradient-pastel text-white font-medium flex items-center gap-2 shadow-soft hover:shadow-glow transition-all"
-            >
-              <Plus size={20} />
-              Create Custom Question
-            </motion.button>
           </div>
         </motion.div>
 

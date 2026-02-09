@@ -14,7 +14,7 @@ const MODEL_NAME = "llama-3.1-8b-instant"
 // QUESTION GENERATION
 // =======================
 export const generateQuestions = async ({ 
-  topic, 
+  topics,  // CHANGED: Now accepts array of topics
   experienceLevel, 
   questionTypes,
   subTopics = [],
@@ -22,6 +22,9 @@ export const generateQuestions = async ({
   answerStyle = 'detailed'
 }) => {
   try {
+    // CHANGED: Build topics section for multiple topics
+    const topicsText = topics.join(", ");
+    
     // Build sub-topics section
     const subTopicsText = subTopics.length > 0 
       ? `\nSub-topics to focus on: ${subTopics.join(", ")}`
@@ -42,55 +45,103 @@ export const generateQuestions = async ({
     
     const styleInstruction = answerStyleInstructions[answerStyle] || answerStyleInstructions['detailed'];
 
-    // Build question type specific instructions
+    // Build question type specific instructions with strict formatting rules
     const questionTypeInstructions = questionTypes.map(type => {
       switch(type) {
         case 'MCQ':
-          return 'For MCQ questions: Include 4 options (A, B, C, D) with the correct answer clearly marked';
+          return `MCQ FORMAT (STRICT):
+- Question must end with "Choose the correct answer:"
+- Must include EXACTLY 4 options labeled A), B), C), D)
+- Each option on a new line
+- In the answer field, clearly state which option is correct (e.g., "Correct Answer: B)")
+- Answer must explain WHY that option is correct
+- DO NOT include code in MCQ questions unless specifically testing code comprehension`;
+        
         case 'Coding':
-          return `For Coding questions: Provide a problem statement, input/output examples, constraints, and a complete solution${programmingLanguage ? ` in ${programmingLanguage}` : ''}`;
+          return `CODING FORMAT (STRICT):
+- Question must include:
+  1. Problem Statement (clear description)
+  2. Input Format (what input to expect)
+  3. Output Format (what output to produce)
+  4. Constraints (limits on input size, time complexity)
+  5. Example Test Cases (at least 2 examples with input/output)
+- Answer must include approach/algorithm explanation
+- Explanation must include step-by-step breakdown
+- Code must be complete working solution${programmingLanguage ? ` in ${programmingLanguage}` : ''}
+- Include Time and Space Complexity analysis in explanation
+- DO NOT format as MCQ - this is a coding problem`;
+        
         case 'Conceptual':
-          return 'For Conceptual questions: Focus on theoretical understanding and core concepts';
+          return `CONCEPTUAL FORMAT (STRICT):
+- Question must be explanation-based (e.g., "Explain...", "What is...", "Describe...")
+- Focus on theoretical understanding, definitions, and concepts
+- Answer must provide clear explanations with examples where helpful
+- DO NOT include code unless illustrating a concept
+- DO NOT format as MCQ or coding problem`;
+        
         case 'Scenario-based':
-          return 'For Scenario-based questions: Present real-world scenarios and ask for problem-solving approaches';
+          return `SCENARIO-BASED FORMAT (STRICT):
+- Question must present a real-world scenario or problem situation
+- Should start with context (e.g., "You are working on...", "A client needs...")
+- Ask how to approach or solve the scenario
+- Answer must provide practical solution steps and considerations
+- Can include code examples if relevant to the scenario
+- DO NOT format as MCQ`;
+        
         default:
           return '';
       }
-    }).filter(Boolean).join('\n- ');
+    }).filter(Boolean).join('\n\n');
 
-    const prompt = `You are an expert interview preparation assistant.
+    const prompt = `You are an expert interview preparation assistant. You MUST return ONLY valid JSON with NO markdown, NO code fences, NO backticks.
 
 Generate 3 interview questions for the following criteria:
 
-Topic: ${topic}${subTopicsText}
+Topics: ${topicsText}${subTopicsText}
 Experience Level: ${experienceLevel}
 Question Types: ${questionTypes.join(", ")}${languageText}
 
-Requirements:
-- Questions must be STRICTLY related to ${topic}${subTopics.length > 0 ? ` with focus on: ${subTopics.join(", ")}` : ''}
+CRITICAL REQUIREMENTS:
+- Questions must be STRICTLY related to: ${topicsText}${subTopics.length > 0 ? ` with focus on: ${subTopics.join(", ")}` : ''}
 - Difficulty should match ${experienceLevel} level
 - Generate ONLY the specified question types: ${questionTypes.join(", ")}
-- ${styleInstruction}
-- For each question, provide a detailed answer/solution
+- Each question MUST follow its type's format EXACTLY - DO NOT MIX FORMATS
+- ${styleInstruction} (applies to answer/explanation ONLY, not question format)
 - Include helpful hints where applicable
 
-Question Type Specific Instructions:
-- ${questionTypeInstructions}
+STRICT FORMAT REQUIREMENTS FOR EACH QUESTION TYPE:
 
-Return ONLY a valid JSON array in this exact format (no markdown, no extra text):
+${questionTypeInstructions}
+
+CRITICAL JSON OUTPUT RULES:
+1. Return ONLY valid JSON - NO markdown, NO triple backticks, NO code fences
+2. Escape all newlines as \\n in strings
+3. Escape all quotes properly
+4. Do NOT wrap JSON in markdown code blocks
+5. Return NOTHING outside the JSON array
+
+Return in this EXACT format (pure JSON only):
 [
   {
     "question": "Question text here",
-    "answer": "Detailed answer here",
+    "answer": "Answer text here",
+    "explanation": "Step-by-step explanation here",
+    "code": "Code snippet here (empty string if not applicable)",
     "hints": "Helpful hints here"
   }
-]`;
+]
+
+IMPORTANT:
+- For MCQ: question contains the MCQ with options, answer contains correct answer and why, explanation provides detailed reasoning, code is empty string
+- For Coding: question contains problem statement with examples, answer contains approach, explanation contains step-by-step breakdown, code contains complete solution
+- For Conceptual: question is explanation-based, answer provides explanation, explanation provides deeper insights, code is empty string or minimal example
+- For Scenario: question presents scenario, answer provides solution steps, explanation provides detailed reasoning, code contains relevant examples if applicable`;
 
     const completion = await groq.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: "You are an expert interview preparation assistant. Generate high-quality, relevant interview questions with detailed answers. Always return valid JSON format."
+          content: "You are an expert interview preparation assistant. Generate high-quality, relevant interview questions with detailed answers. CRITICAL: Return ONLY valid JSON with NO markdown formatting, NO code fences, NO backticks. Escape all newlines as \\n and quotes properly."
         },
         {
           role: "user",
@@ -99,33 +150,51 @@ Return ONLY a valid JSON array in this exact format (no markdown, no extra text)
       ],
       model: MODEL_NAME,
       temperature: 0.7,
-      max_tokens: 3000
+      max_tokens: 3000,
+      response_format: { type: "json_object" }  // ADDED: Force JSON output
     });
 
     const text = completion.choices[0]?.message?.content || "";
 
-    // Extract JSON from response (handle markdown code blocks)
+    // ENHANCED: More robust JSON extraction
     let jsonText = text.trim();
+    
+    // Remove markdown code fences if present
     if (jsonText.startsWith('```')) {
-      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     }
     
-    const jsonMatch = jsonText.match(/\[[\s\S]*\]/);
+    // Try to extract JSON array or object
+    let jsonMatch = jsonText.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      // Try to find JSON object that might contain questions array
+      const objMatch = jsonText.match(/\{[\s\S]*\}/);
+      if (objMatch) {
+        const parsed = JSON.parse(objMatch[0]);
+        if (parsed.questions && Array.isArray(parsed.questions)) {
+          jsonMatch = [JSON.stringify(parsed.questions)];
+        }
+      }
+    }
+    
     if (!jsonMatch) {
       console.error('AI Response:', text);
-      throw new Error("Invalid AI response format");
+      throw new Error("Invalid AI response format - no valid JSON found");
     }
 
     const questions = JSON.parse(jsonMatch[0]);
 
+    // CHANGED: Map to include all fields including topics array
     return questions.map(q => ({
-      topic,
+      topics,  // CHANGED: Store topics array
       experienceLevel,
       questionTypes,
       subTopics,
       programmingLanguage,
       question: q.question,
       answer: q.answer,
+      explanation: q.explanation || "",  // NEW: Add explanation field
+      code: q.code || "",  // NEW: Add code field
       hints: q.hints || ""
     }));
 

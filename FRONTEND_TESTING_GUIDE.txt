@@ -1,0 +1,309 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║              🧪 FRONTEND TESTING GUIDE 🧪                            ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📋 TESTING CHECKLIST
+
+═══════════════════════════════════════════════════════════════════════
+
+🎯 QUESTION GENERATOR TESTING
+
+Test 1: Topic Selection
+□ Navigate to /interview/1
+□ Verify topics load from API
+□ Click a topic (e.g., "DSA")
+□ Verify sub-topics appear below
+□ Expected: Sub-topics section appears with options
+
+Test 2: Sub-Topic Selection
+□ Select a topic with sub-topics (DSA, DBMS, Java, React)
+□ Click multiple sub-topics
+□ Verify they highlight when selected
+□ Click again to deselect
+□ Expected: Multiple sub-topics can be selected/deselected
+
+Test 3: Question Type Selection
+□ Click multiple question types (MCQ, Coding, Conceptual)
+□ Verify they highlight
+□ Expected: Multiple types can be selected
+
+Test 4: Programming Language (Conditional)
+□ Select "DSA" topic
+□ Select "Coding" question type
+□ Verify language selector appears
+□ Select a language (e.g., "JavaScript")
+□ Expected: Language section only appears for coding topics + Coding type
+
+Test 5: Programming Language (Not Shown)
+□ Select "DBMS" topic
+□ Select "Conceptual" question type
+□ Verify language selector does NOT appear
+□ Expected: No language section
+
+Test 6: Answer Style Selection
+□ Verify 4 answer style buttons appear
+□ Click each style
+□ Verify selection highlights
+□ Expected: One style selected at a time
+
+Test 7: Summary Panel
+□ Make selections
+□ Check right sidebar "Selection Summary"
+□ Verify all selections are reflected
+□ Expected: Shows topic, sub-topics count, question types count, language, difficulty, answer style
+
+Test 8: Validation - No Topic
+□ Click "Generate Questions" without selecting topic
+□ Expected: Alert "Please select a topic"
+
+Test 9: Validation - No Question Types
+□ Select topic only
+□ Click "Generate Questions"
+□ Expected: Alert "Please select at least one question type"
+
+Test 10: Validation - No Language
+□ Select DSA + Coding type
+□ Don't select language
+□ Click "Generate Questions"
+□ Expected: Alert "Please select a programming language"
+
+Test 11: Successful Generation
+□ Select: DSA, Arrays sub-topic, Coding type, JavaScript, Intermediate, With Examples
+□ Click "Generate Questions"
+□ Expected: Loading state → Questions appear with all metadata
+
+Test 12: Question Display
+□ After generation, verify each question shows:
+  - Topic badge
+  - Experience level badge
+  - Question type badges
+  - Programming language badge (if applicable)
+  - Question text
+  - Answer section (expandable)
+  - Hints section
+□ Expected: All metadata displayed correctly
+
+═══════════════════════════════════════════════════════════════════════
+
+🎯 RESUME ANALYZER TESTING
+
+Test 1: File Upload
+□ Navigate to /resume
+□ Click upload area
+□ Select a PDF/DOCX file
+□ Expected: File name and size displayed
+
+Test 2: Validation
+□ Click "Analyze Resume" without file
+□ Expected: Alert "Please upload a resume first"
+
+Test 3: Analysis Trigger
+□ Upload file
+□ Click "Analyze Resume"
+□ Expected: Button shows "Analyzing..." and is disabled
+
+Test 4: Results Display
+□ Wait for analysis to complete
+□ Verify ATS score circle appears
+□ Expected: Score displayed with circular progress
+
+Test 5: Quick Stats
+□ Check quick stats cards
+□ Verify shows:
+  - Matched Keywords count
+  - Missing Keywords count
+□ Expected: Correct counts displayed
+
+Test 6: Matched Keywords Section
+□ Scroll to "Matched Keywords" section
+□ Verify:
+  - Green/mint color scheme
+  - CheckCircle icon
+  - Keywords in green badges
+  - Description text present
+□ Expected: Clear visual distinction with green theme
+
+Test 7: Missing Keywords Section
+□ Scroll to "Missing Keywords" section
+□ Verify:
+  - Red/coral color scheme
+  - Target icon
+  - Keywords in red badges
+  - Description text present
+□ Expected: Clear visual distinction with red theme
+
+Test 8: Visual Distinction
+□ Compare Matched vs Missing sections
+□ Verify they are clearly different
+□ Expected: Easy to distinguish at a glance
+
+Test 9: Strengths Section
+□ Verify strengths section still exists
+□ Check formatting
+□ Expected: Unchanged from before
+
+Test 10: Improvements Section
+□ Verify improvements section still exists
+□ Check priority badges
+□ Expected: Unchanged from before
+
+═══════════════════════════════════════════════════════════════════════
+
+🎨 UI/UX TESTING
+
+Test 1: Responsive Design
+□ Test on mobile (< 768px)
+□ Test on tablet (768px - 1024px)
+□ Test on desktop (> 1024px)
+□ Expected: Layout adapts correctly
+
+Test 2: Animations
+□ Watch for smooth transitions
+□ Check fade-in effects
+□ Verify hover states
+□ Expected: Smooth, no jank
+
+Test 3: Color Consistency
+□ Verify all colors match existing theme
+□ Check gradients
+□ Verify button styles
+□ Expected: Consistent with rest of app
+
+Test 4: Loading States
+□ Check loading spinner/text
+□ Verify disabled states
+□ Expected: Clear feedback during operations
+
+Test 5: Error States
+□ Trigger validation errors
+□ Check error messages
+□ Expected: User-friendly messages
+
+═══════════════════════════════════════════════════════════════════════
+
+🔄 INTEGRATION TESTING
+
+Test 1: API Connection
+□ Open browser DevTools → Network tab
+□ Select a topic
+□ Verify API call to /api/questions/subtopics/:topic
+□ Expected: 200 OK response with sub-topics
+
+Test 2: Question Generation API
+□ Fill all fields
+□ Click Generate
+□ Check Network tab for POST /api/questions/generate
+□ Verify request payload includes:
+  - topic
+  - experienceLevel
+  - questionTypes
+  - subTopics
+  - programmingLanguage
+  - answerStyle
+□ Expected: 200 OK with questions array
+
+Test 3: Error Handling
+□ Disconnect internet
+□ Try to generate questions
+□ Expected: Error message displayed
+
+Test 4: Token Authentication
+□ Check if Authorization header is sent
+□ Verify token from localStorage
+□ Expected: Bearer token in request
+
+═══════════════════════════════════════════════════════════════════════
+
+📊 DATA VALIDATION
+
+Test 1: Empty Sub-Topics
+□ Select topic with no sub-topics
+□ Verify sub-topics section doesn't appear
+□ Expected: Graceful handling
+
+Test 2: Empty Results
+□ Check if API returns empty arrays
+□ Verify UI handles gracefully
+□ Expected: No errors, appropriate messages
+
+Test 3: Large Data Sets
+□ Select many sub-topics
+□ Verify UI doesn't break
+□ Expected: Scrollable, responsive
+
+═══════════════════════════════════════════════════════════════════════
+
+🎯 EDGE CASES
+
+Test 1: Rapid Clicking
+□ Click buttons rapidly
+□ Expected: No duplicate requests, stable state
+
+Test 2: Browser Back Button
+□ Make selections
+□ Click back
+□ Return to page
+□ Expected: State resets properly
+
+Test 3: Page Refresh
+□ Make selections
+□ Refresh page
+□ Expected: State resets, no errors
+
+Test 4: Multiple Tabs
+□ Open in multiple tabs
+□ Make different selections
+□ Expected: Each tab independent
+
+═══════════════════════════════════════════════════════════════════════
+
+✅ ACCEPTANCE CRITERIA
+
+Question Generator:
+□ All topics load dynamically
+□ Sub-topics appear when topic selected
+□ Language appears only when needed
+□ Multiple selections work
+□ Validation prevents invalid submissions
+□ Questions display with full details
+□ API integration works
+□ No UI/styling changes
+
+Resume Analyzer:
+□ Matched keywords clearly visible
+□ Missing keywords clearly visible
+□ Visual distinction is obvious
+□ Counts are accurate
+□ No layout changes
+□ Existing sections unchanged
+
+═══════════════════════════════════════════════════════════════════════
+
+🐛 KNOWN ISSUES TO CHECK
+
+□ API endpoint availability
+□ CORS issues
+□ Authentication token expiry
+□ File size limits
+□ Browser compatibility
+
+═══════════════════════════════════════════════════════════════════════
+
+📝 TESTING NOTES
+
+- Test in Chrome, Firefox, Safari, Edge
+- Test with different screen sizes
+- Test with slow network (throttling)
+- Test with ad blockers enabled
+- Test with browser extensions
+
+═══════════════════════════════════════════════════════════════════════
+
+✅ SIGN-OFF
+
+Tester: _______________
+Date: _________________
+Status: _______________
+Notes: ________________
+
+═══════════════════════════════════════════════════════════════════════

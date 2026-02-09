@@ -59,7 +59,7 @@ export default function DashboardPage() {
   )
 }
 
-function RoleCard({ role, index }: { role: typeof roles[0], index: number }) {
+function RoleCard({ role, index }) {
   const Icon = role.icon
   
   return (
