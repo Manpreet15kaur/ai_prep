@@ -1,7 +1,7 @@
 {
-  "name": "prepwise-ai-backend",
+  "name": "interview-prep-ai-backend",
   "version": "1.0.0",
-  "description": "Backend for PrepWise AI Interview Preparation Platform",
+  "description": "Backend API for Interview Prep AI Platform",
   "main": "server.js",
   "type": "module",
   "scripts": {
