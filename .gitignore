@@ -48,3 +48,7 @@ coverage/
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Documentation (except README)
+*.md
+!README.md
