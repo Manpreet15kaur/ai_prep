@@ -121,8 +121,40 @@ export const login = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
-      .populate('savedQuestions')
-      .populate('resumeAnalyses');
+      .populate({
+        path: 'savedQuestions',
+        select: 'topic questionTypes createdAt'
+      })
+      .populate({
+        path: 'resumeAnalyses',
+        select: 'atsScore createdAt',
+        options: { sort: { createdAt: -1 } }
+      });
+
+    // Calculate stats
+    const totalQuestions = user.savedQuestions.length;
+    const latestResumeScore = user.resumeAnalyses.length > 0 
+      ? user.resumeAnalyses[0].atsScore 
+      : 0;
+
+    // Calculate readiness score based on questions saved
+    const readinessScore = Math.min(100, Math.floor((totalQuestions / 100) * 100));
+
+    // Calculate study streak (simplified - based on consecutive days with activity)
+    const studyStreak = calculateStudyStreak(user.savedQuestions);
+
+    // Calculate total study hours (estimate: 10 minutes per question)
+    const totalHours = Math.floor(totalQuestions * 0.17); // 10 min = 0.17 hours
+
+    // Group questions by topic for progress tracking
+    const topicProgress = {};
+    user.savedQuestions.forEach(q => {
+      const topic = q.topic || 'General';
+      if (!topicProgress[topic]) {
+        topicProgress[topic] = 0;
+      }
+      topicProgress[topic]++;
+    });
 
     res.status(200).json({
       success: true,
@@ -130,8 +162,17 @@ export const getMe = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        savedQuestionsCount: user.savedQuestions.length,
-        resumeAnalysesCount: user.resumeAnalyses.length
+        createdAt: user.createdAt,
+        stats: {
+          readinessScore,
+          questionsCompleted: totalQuestions,
+          studyStreak,
+          resumeScore: latestResumeScore,
+          totalHours,
+          topicProgress
+        },
+        savedQuestions: user.savedQuestions,
+        resumeAnalyses: user.resumeAnalyses
       }
     });
   } catch (error) {
@@ -142,3 +183,39 @@ export const getMe = async (req, res) => {
     });
   }
 };
+
+// Helper function to calculate study streak
+function calculateStudyStreak(questions) {
+  if (questions.length === 0) return 0;
+
+  const dates = questions
+    .map(q => {
+      const date = new Date(q.createdAt);
+      date.setHours(0, 0, 0, 0);
+      return date.getTime();
+    })
+    .filter((value, index, self) => self.indexOf(value) === index) // unique dates
+    .sort((a, b) => b - a); // sort descending
+
+  if (dates.length === 0) return 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayTime = today.getTime();
+
+  // Check if most recent activity is today or yesterday
+  const daysDiff = Math.floor((todayTime - dates[0]) / (1000 * 60 * 60 * 24));
+  if (daysDiff > 1) return 0; // Streak broken
+
+  let streak = 1;
+  for (let i = 0; i < dates.length - 1; i++) {
+    const diff = Math.floor((dates[i] - dates[i + 1]) / (1000 * 60 * 60 * 24));
+    if (diff === 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}

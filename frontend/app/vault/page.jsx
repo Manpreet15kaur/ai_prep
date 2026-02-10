@@ -9,8 +9,7 @@ import Navbar from '@/components/Navbar'
 export default function VaultPage() {
   const [questions, setQuestions] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterRole, setFilterRole] = useState('All')
-  const [filterDifficulty, setFilterDifficulty] = useState('All')
+  const [filterSubject, setFilterSubject] = useState('All')
   const [editingId, setEditingId] = useState(null)
   const [editText, setEditText] = useState('')
 
@@ -18,25 +17,51 @@ export default function VaultPage() {
     loadSavedQuestions()
   }, [])
 
-  const loadSavedQuestions = () => {
-    const saved = localStorage.getItem('savedQuestions')
-    if (saved) {
-      setQuestions(JSON.parse(saved))
+  const loadSavedQuestions = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/questions', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setQuestions(result.questions)
+      }
+    } catch (error) {
+      console.error('Error loading questions:', error)
     }
   }
 
-  const deleteQuestion = (id) => {
-    const updated = questions.filter(q => q.id !== id)
-    setQuestions(updated)
-    localStorage.setItem('savedQuestions', JSON.stringify(updated))
+  const deleteQuestion = async (id) => {
+    if (!confirm('Are you sure you want to delete this question?')) return
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/questions/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setQuestions(questions.filter(q => q._id !== id))
+      } else {
+        alert('Failed to delete question')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Failed to delete question')
+    }
   }
 
   const toggleBookmark = (id) => {
-    const updated = questions.map(q => 
-      q.id === id ? { ...q, bookmarked: !q.bookmarked } : q
-    )
-    setQuestions(updated)
-    localStorage.setItem('savedQuestions', JSON.stringify(updated))
+    // Bookmark functionality can be added later
+    console.log('Toggle bookmark:', id)
   }
 
   const startEdit = (id, text) => {
@@ -44,20 +69,37 @@ export default function VaultPage() {
     setEditText(text)
   }
 
-  const saveEdit = (id) => {
-    const updated = questions.map(q => 
-      q.id === id ? { ...q, question: editText } : q
-    )
-    setQuestions(updated)
-    localStorage.setItem('savedQuestions', JSON.stringify(updated))
-    setEditingId(null)
+  const saveEdit = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/questions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ question: editText })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setQuestions(questions.map(q => 
+          q._id === id ? { ...q, question: editText } : q
+        ))
+        setEditingId(null)
+      } else {
+        alert('Failed to update question')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Failed to update question')
+    }
   }
 
   const filteredQuestions = questions.filter(q => {
     const matchesSearch = q.question.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesRole = filterRole === 'All' || q.role === filterRole
-    const matchesDifficulty = filterDifficulty === 'All' || q.difficulty === filterDifficulty
-    return matchesSearch && matchesRole && matchesDifficulty
+    const matchesSubject = filterSubject === 'All' || q.topic === filterSubject
+    return matchesSearch && matchesSubject
   })
 
   return (
@@ -79,7 +121,7 @@ export default function VaultPage() {
         </motion.div>
 
         {/* Search and Filters */}
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
           <div className="md:col-span-2 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input
@@ -92,25 +134,20 @@ export default function VaultPage() {
           </div>
           
           <select
-            value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
+            value={filterSubject}
+            onChange={(e) => setFilterSubject(e.target.value)}
             className="px-4 py-3 rounded-xl bg-white border border-pink/10 focus:outline-none focus:border-coral transition-all"
           >
-            <option>All Roles</option>
-            <option>Frontend Developer</option>
-            <option>Backend Developer</option>
-            <option>Full Stack Developer</option>
-          </select>
-          
-          <select
-            value={filterDifficulty}
-            onChange={(e) => setFilterDifficulty(e.target.value)}
-            className="px-4 py-3 rounded-xl bg-white border border-pink/10 focus:outline-none focus:border-coral transition-all"
-          >
-            <option>All Difficulties</option>
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
+            <option>All</option>
+            <option>Frontend Development</option>
+            <option>Backend Development</option>
+            <option>DevOps</option>
+            <option>DBMS</option>
+            <option>Operating System</option>
+            <option>Computer Networks</option>
+            <option>DSA (Data Structures & Algorithms)</option>
+            <option>Cloud Computing</option>
+            <option>AI & ML</option>
           </select>
         </div>
 

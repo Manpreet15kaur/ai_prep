@@ -14,7 +14,7 @@ const questionSchema = new mongoose.Schema({
   experienceLevel: {
     type: String,
     required: true,
-    enum: ['Beginner', 'Intermediate', 'Advanced']
+    enum: ['Beginner', 'Intermediate', 'Advanced', 'Mid-Level', 'Entry', 'Senior']
   },
   questionTypes: [{
     type: String,
@@ -32,9 +32,29 @@ const questionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  optionA: {
+    type: String,
+    default: ''
+  },
+  optionB: {
+    type: String,
+    default: ''
+  },
+  optionC: {
+    type: String,
+    default: ''
+  },
+  optionD: {
+    type: String,
+    default: ''
+  },
   answer: {
     type: String,
     required: true
+  },
+  explanation: {
+    type: String,
+    default: ''
   },
   hints: {
     type: String

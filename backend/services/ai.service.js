@@ -19,7 +19,8 @@ export const generateQuestions = async ({
   questionTypes,
   subTopics = [],
   programmingLanguage = null,
-  answerStyle = 'detailed'
+  answerStyle = 'detailed',
+  count = 3  // NEW: Number of questions to generate
 }) => {
   try {
     // CHANGED: Build topics section for multiple topics
@@ -50,11 +51,10 @@ export const generateQuestions = async ({
       switch(type) {
         case 'MCQ':
           return `MCQ FORMAT (STRICT):
-- Question must end with "Choose the correct answer:"
-- Must include EXACTLY 4 options labeled A), B), C), D)
-- Each option on a new line
-- In the answer field, clearly state which option is correct (e.g., "Correct Answer: B)")
-- Answer must explain WHY that option is correct
+- Question text should be clear and concise
+- Include EXACTLY 4 options as separate fields: optionA, optionB, optionC, optionD
+- In the answer field, state which option is correct (e.g., "B")
+- In explanation field, explain WHY that option is correct
 - DO NOT include code in MCQ questions unless specifically testing code comprehension`;
         
         case 'Coding':
@@ -95,7 +95,7 @@ export const generateQuestions = async ({
 
     const prompt = `You are an expert interview preparation assistant. You MUST return ONLY valid JSON with NO markdown, NO code fences, NO backticks.
 
-Generate 3 interview questions for the following criteria:
+Generate ${count} interview questions for the following criteria:
 
 Topics: ${topicsText}${subTopicsText}
 Experience Level: ${experienceLevel}
@@ -124,7 +124,11 @@ Return in this EXACT format (pure JSON only):
 [
   {
     "question": "Question text here",
-    "answer": "Answer text here",
+    "optionA": "First option (for MCQ only, empty string otherwise)",
+    "optionB": "Second option (for MCQ only, empty string otherwise)",
+    "optionC": "Third option (for MCQ only, empty string otherwise)",
+    "optionD": "Fourth option (for MCQ only, empty string otherwise)",
+    "answer": "Correct answer (for MCQ: A, B, C, or D; for others: full answer text)",
     "explanation": "Step-by-step explanation here",
     "code": "Code snippet here (empty string if not applicable)",
     "hints": "Helpful hints here"
@@ -132,10 +136,10 @@ Return in this EXACT format (pure JSON only):
 ]
 
 IMPORTANT:
-- For MCQ: question contains the MCQ with options, answer contains correct answer and why, explanation provides detailed reasoning, code is empty string
-- For Coding: question contains problem statement with examples, answer contains approach, explanation contains step-by-step breakdown, code contains complete solution
-- For Conceptual: question is explanation-based, answer provides explanation, explanation provides deeper insights, code is empty string or minimal example
-- For Scenario: question presents scenario, answer provides solution steps, explanation provides detailed reasoning, code contains relevant examples if applicable`;
+- For MCQ: question contains the question text, optionA/B/C/D contain the 4 options, answer contains just the letter (A, B, C, or D), explanation provides detailed reasoning, code is empty string
+- For Coding: question contains problem statement with examples, optionA/B/C/D are empty strings, answer contains approach, explanation contains step-by-step breakdown, code contains complete solution
+- For Conceptual: question is explanation-based, optionA/B/C/D are empty strings, answer provides explanation, explanation provides deeper insights, code is empty string or minimal example
+- For Scenario: question presents scenario, optionA/B/C/D are empty strings, answer provides solution steps, explanation provides detailed reasoning, code contains relevant examples if applicable`;
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -150,7 +154,7 @@ IMPORTANT:
       ],
       model: MODEL_NAME,
       temperature: 0.7,
-      max_tokens: 3000,
+      max_tokens: count > 5 ? 4000 : 3000,  // Increase tokens for more questions
       response_format: { type: "json_object" }  // ADDED: Force JSON output
     });
 
@@ -192,6 +196,10 @@ IMPORTANT:
       subTopics,
       programmingLanguage,
       question: q.question,
+      optionA: q.optionA || "",  // NEW: MCQ option A
+      optionB: q.optionB || "",  // NEW: MCQ option B
+      optionC: q.optionC || "",  // NEW: MCQ option C
+      optionD: q.optionD || "",  // NEW: MCQ option D
       answer: q.answer,
       explanation: q.explanation || "",  // NEW: Add explanation field
       code: q.code || "",  // NEW: Add code field
@@ -205,13 +213,11 @@ IMPORTANT:
 };
 
 // =======================
-// RESUME ANALYSIS
+// RESUME ANALYSIS WITH DETERMINISTIC SCORING
 // =======================
 export const analyzeResume = async ({ resumeText, jobDescription }) => {
   try {
-    const prompt = `You are an expert ATS (Applicant Tracking System) analyzer and career coach.
-
-Analyze this resume against the job description and provide ATS scoring with clear keyword analysis:
+    const prompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze this resume against the job description.
 
 JOB DESCRIPTION:
 ${jobDescription}
@@ -219,35 +225,49 @@ ${jobDescription}
 RESUME:
 ${resumeText}
 
-Provide analysis in the following JSON format (return ONLY valid JSON, no markdown):
+Extract and categorize ALL relevant information for deterministic scoring. Return ONLY valid JSON (no markdown):
+
 {
-  "atsScore": 75,
-  "matchedKeywords": ["keyword1", "keyword2", "keyword3"],
-  "missingKeywords": ["missing1", "missing2", "missing3"],
-  "missingSkills": ["skill1", "skill2"],
-  "weakSections": [
-    {"section": "section name", "feedback": "specific feedback"}
-  ],
+  "skills": {
+    "exactMatches": ["skill1", "skill2"],
+    "partialMatches": [{"resume": "React.js", "jd": "React", "similarity": 0.9}],
+    "missing": ["skill3", "skill4"]
+  },
+  "keywords": {
+    "matched": ["keyword1", "keyword2"],
+    "missing": ["keyword3", "keyword4"]
+  },
+  "projects": {
+    "relevant": [{"name": "project", "relevance": 0.8, "reason": "why relevant"}],
+    "gaps": ["missing project type or domain"]
+  },
+  "education": {
+    "hasRequired": true,
+    "details": "education info"
+  },
+  "certifications": {
+    "matched": ["cert1"],
+    "missing": ["cert2"]
+  },
   "improvements": [
-    {"area": "area name", "suggestion": "actionable suggestion", "priority": "High"}
+    {"area": "Skills", "suggestion": "Add Docker, Kubernetes", "priority": "High", "impact": "Would increase ATS score by 10%"}
   ]
 }
 
-IMPORTANT INSTRUCTIONS:
-1. matchedKeywords: List ALL keywords/skills from the job description that ARE present in the resume
-2. missingKeywords: List ALL important keywords/skills from the job description that are NOT found in the resume
-3. missingSkills: Technical and soft skills mentioned in job description but absent in resume
-4. Be thorough in keyword extraction - include technologies, tools, methodologies, certifications
-5. Consider synonyms and variations (e.g., "JS" and "JavaScript" are the same)
-6. Prioritize technical skills, tools, frameworks, and domain-specific terminology
-
-Be specific, actionable, and focus on ATS optimization with clear keyword matching.`;
+CRITICAL INSTRUCTIONS:
+1. Extract ALL skills, keywords, technologies from BOTH resume and job description
+2. Compare case-insensitively and consider synonyms (JS=JavaScript, K8s=Kubernetes)
+3. Classify matches as exact (100%), partial (50-90%), or missing (0%)
+4. Evaluate project relevance to job requirements (0-100%)
+5. Check education and certification requirements
+6. Provide specific, actionable improvements with impact estimates
+7. Be thorough and precise - this will be used for deterministic scoring`;
 
     const completion = await groq.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: "You are an expert ATS (Applicant Tracking System) analyzer and career coach. Provide detailed, actionable feedback on resumes with precise keyword analysis. Always return valid JSON format."
+          content: "You are an expert ATS analyzer. Extract precise, structured data for deterministic scoring. Always return valid JSON."
         },
         {
           role: "user",
@@ -255,13 +275,14 @@ Be specific, actionable, and focus on ATS optimization with clear keyword matchi
         }
       ],
       model: MODEL_NAME,
-      temperature: 0.5,
-      max_tokens: 3000
+      temperature: 0.3,  // Lower temperature for more consistent extraction
+      max_tokens: 3500,
+      response_format: { type: "json_object" }
     });
 
     const text = completion.choices[0]?.message?.content || "";
 
-    // Extract JSON from response (handle markdown code blocks)
+    // Extract JSON from response
     let jsonText = text.trim();
     if (jsonText.startsWith('```')) {
       jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
@@ -273,16 +294,15 @@ Be specific, actionable, and focus on ATS optimization with clear keyword matchi
       throw new Error("Invalid AI response format");
     }
 
-    const analysis = JSON.parse(jsonMatch[0]);
+    const extracted = JSON.parse(jsonMatch[0]);
     
-    // Ensure all required fields exist
+    // DETERMINISTIC SCORING CALCULATION
+    const scoring = calculateATSScore(extracted);
+    
     return {
-      atsScore: analysis.atsScore || 0,
-      matchedKeywords: analysis.matchedKeywords || [],
-      missingKeywords: analysis.missingKeywords || [],
-      missingSkills: analysis.missingSkills || [],
-      weakSections: analysis.weakSections || [],
-      improvements: analysis.improvements || []
+      ...scoring,
+      rawExtraction: extracted,  // Keep raw data for transparency
+      improvements: extracted.improvements || []
     };
 
   } catch (error) {
@@ -290,3 +310,84 @@ Be specific, actionable, and focus on ATS optimization with clear keyword matchi
     throw new Error("Failed to analyze resume. Please try again.");
   }
 };
+
+// Deterministic ATS Scoring Function
+function calculateATSScore(data) {
+  const weights = {
+    skills: 0.50,      // 50%
+    projects: 0.20,    // 20%
+    keywords: 0.20,    // 20%
+    education: 0.05,   // 5%
+    certifications: 0.05  // 5%
+  };
+
+  // 1. SKILLS SCORE (50%)
+  const exactMatches = data.skills?.exactMatches?.length || 0;
+  const partialMatches = data.skills?.partialMatches?.length || 0;
+  const missingSkills = data.skills?.missing?.length || 0;
+  const totalSkills = exactMatches + partialMatches + missingSkills;
+  
+  let skillsScore = 0;
+  if (totalSkills > 0) {
+    const partialScore = partialMatches * 0.7;  // Partial matches count as 70%
+    skillsScore = ((exactMatches + partialScore) / totalSkills) * 100;
+  }
+
+  // 2. PROJECTS SCORE (20%)
+  const relevantProjects = data.projects?.relevant || [];
+  const projectsScore = relevantProjects.length > 0
+    ? relevantProjects.reduce((sum, p) => sum + (p.relevance || 0), 0) / relevantProjects.length
+    : 0;
+
+  // 3. KEYWORDS SCORE (20%)
+  const matchedKeywords = data.keywords?.matched?.length || 0;
+  const missingKeywords = data.keywords?.missing?.length || 0;
+  const totalKeywords = matchedKeywords + missingKeywords;
+  const keywordsScore = totalKeywords > 0 ? (matchedKeywords / totalKeywords) * 100 : 0;
+
+  // 4. EDUCATION SCORE (5%)
+  const educationScore = data.education?.hasRequired ? 100 : 50;
+
+  // 5. CERTIFICATIONS SCORE (5%)
+  const matchedCerts = data.certifications?.matched?.length || 0;
+  const missingCerts = data.certifications?.missing?.length || 0;
+  const totalCerts = matchedCerts + missingCerts;
+  const certificationsScore = totalCerts > 0 ? (matchedCerts / totalCerts) * 100 : 100;  // 100 if no certs required
+
+  // WEIGHTED TOTAL
+  const atsScore = Math.round(
+    (skillsScore * weights.skills) +
+    (projectsScore * weights.projects) +
+    (keywordsScore * weights.keywords) +
+    (educationScore * weights.education) +
+    (certificationsScore * weights.certifications)
+  );
+
+  // Calculate selection probability (non-linear based on ATS score)
+  let selectionProbability = 0;
+  if (atsScore >= 80) selectionProbability = 85 + (atsScore - 80) * 0.75;
+  else if (atsScore >= 60) selectionProbability = 50 + (atsScore - 60) * 1.75;
+  else if (atsScore >= 40) selectionProbability = 20 + (atsScore - 40) * 1.5;
+  else selectionProbability = atsScore * 0.5;
+
+  return {
+    atsScore: Math.min(100, Math.max(0, atsScore)),
+    selectionProbability: Math.round(Math.min(100, Math.max(0, selectionProbability))),
+    breakdown: {
+      skillsScore: Math.round(skillsScore),
+      projectsScore: Math.round(projectsScore),
+      keywordsScore: Math.round(keywordsScore),
+      educationScore: Math.round(educationScore),
+      certificationsScore: Math.round(certificationsScore)
+    },
+    matchedSkills: data.skills?.exactMatches || [],
+    partialSkills: data.skills?.partialMatches || [],
+    missingSkills: data.skills?.missing || [],
+    matchedKeywords: data.keywords?.matched || [],
+    missingKeywords: data.keywords?.missing || [],
+    projectRelevance: data.projects?.relevant || [],
+    projectGaps: data.projects?.gaps || [],
+    matchedCertifications: data.certifications?.matched || [],
+    missingCertifications: data.certifications?.missing || []
+  };
+}

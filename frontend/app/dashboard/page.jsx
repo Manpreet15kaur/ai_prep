@@ -1,58 +1,82 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Code, Database, Layers, BarChart, Cloud, Palette, Smartphone, Brain, Briefcase, LogOut } from 'lucide-react'
+import { Code, Server, Cog, Database as DatabaseIcon, Cpu, Network, Binary, Cloud as CloudIcon, Brain } from 'lucide-react'
 import Link from 'next/link'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import { logout } from '@/lib/auth'
+import Navbar from '@/components/Navbar'
 
 const roles = [
-  { id: 1, title: 'Frontend Developer', icon: Code, color: 'from-peach to-coral', skills: ['React', 'TypeScript', 'CSS'], experience: 'Mid-Level', questions: 45 },
-  { id: 2, title: 'Backend Developer', icon: Database, color: 'from-lavender to-purple', skills: ['Node.js', 'SQL', 'APIs'], experience: 'Senior', questions: 52 },
-  { id: 3, title: 'Full Stack Developer', icon: Layers, color: 'from-blue to-lavender', skills: ['MERN', 'DevOps', 'AWS'], experience: 'Mid-Level', questions: 68 },
-  { id: 4, title: 'Data Analyst', icon: BarChart, color: 'from-mint to-blue', skills: ['Python', 'SQL', 'Tableau'], experience: 'Entry', questions: 38 },
-  { id: 5, title: 'DevOps Engineer', icon: Cloud, color: 'from-yellow to-peach', skills: ['Docker', 'K8s', 'CI/CD'], experience: 'Senior', questions: 41 },
-  { id: 6, title: 'UI/UX Designer', icon: Palette, color: 'from-pink to-coral', skills: ['Figma', 'Design Systems'], experience: 'Mid-Level', questions: 33 },
-  { id: 7, title: 'Mobile App Developer', icon: Smartphone, color: 'from-purple to-pink', skills: ['React Native', 'Swift'], experience: 'Mid-Level', questions: 47 },
-  { id: 8, title: 'AI/ML Engineer', icon: Brain, color: 'from-coral to-lavender', skills: ['Python', 'TensorFlow', 'ML'], experience: 'Senior', questions: 55 },
-  { id: 9, title: 'Product Manager', icon: Briefcase, color: 'from-beige to-peach', skills: ['Strategy', 'Analytics', 'Agile'], experience: 'Senior', questions: 42 },
+  { 
+    id: 1, 
+    title: 'Frontend Development', 
+    icon: Code, 
+    color: 'from-peach to-coral', 
+    skills: ['HTML', 'CSS', 'React', 'JavaScript']
+  },
+  { 
+    id: 2, 
+    title: 'Backend Development', 
+    icon: Server, 
+    color: 'from-lavender to-purple', 
+    skills: ['Node.js', 'Python', 'Java', 'APIs']
+  },
+  { 
+    id: 3, 
+    title: 'DevOps', 
+    icon: Cog, 
+    color: 'from-blue to-lavender', 
+    skills: ['Docker', 'Kubernetes', 'CI/CD', 'Cloud']
+  },
+  { 
+    id: 4, 
+    title: 'DBMS', 
+    icon: DatabaseIcon, 
+    color: 'from-mint to-blue', 
+    skills: ['SQL Queries', 'Normalization', 'Transactions', 'Indexes']
+  },
+  { 
+    id: 5, 
+    title: 'Operating System', 
+    icon: Cpu, 
+    color: 'from-yellow to-peach', 
+    skills: ['Processes', 'Memory', 'File System', 'Synchronization']
+  },
+  { 
+    id: 6, 
+    title: 'Computer Networks', 
+    icon: Network, 
+    color: 'from-pink to-coral', 
+    skills: ['Models', 'Protocols', 'IP Addressing', 'Routing']
+  },
+  { 
+    id: 7, 
+    title: 'DSA', 
+    icon: Binary, 
+    color: 'from-purple to-pink', 
+    skills: ['C++', 'Java', 'Python']
+  },
+  { 
+    id: 8, 
+    title: 'Cloud Computing', 
+    icon: CloudIcon, 
+    color: 'from-coral to-lavender', 
+    skills: ['AWS', 'Azure', 'GCP', 'DevOps Integration']
+  },
+  { 
+    id: 9, 
+    title: 'AI & ML', 
+    icon: Brain, 
+    color: 'from-beige to-peach', 
+    skills: ['Python', 'ML Algorithms', 'Deep Learning', 'NLP']
+  },
 ]
 
 export default function DashboardPage() {
-  const handleLogout = () => {
-    if (confirm('Are you sure you want to logout?')) {
-      logout()
-    }
-  }
-
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-cream via-peach/10 to-lavender/20">
-        {/* Header */}
-        <header className="glass border-b border-pink/20 sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex justify-between items-center">
-              <Link href="/">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-coral to-purple bg-clip-text text-transparent">
-                  Interview Prep AI
-                </h1>
-              </Link>
-              <nav className="flex gap-6 items-center">
-                <Link href="/dashboard" className="text-coral font-medium">Dashboard</Link>
-                <Link href="/vault" className="text-gray-600 hover:text-coral transition">My Vault</Link>
-                <Link href="/resume" className="text-gray-600 hover:text-coral transition">Resume Analyzer</Link>
-                <Link href="/profile" className="text-gray-600 hover:text-coral transition">Profile</Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition"
-                >
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </nav>
-            </div>
-          </div>
-        </header>
+        <Navbar />
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-6 py-12">
@@ -100,15 +124,6 @@ function RoleCard({ role, index }) {
                 {skill}
               </span>
             ))}
-          </div>
-          
-          <div className="flex justify-between items-center text-sm text-gray-600">
-            <span className="px-3 py-1 rounded-full bg-lavender/30">{role.experience}</span>
-            <span className="font-medium">{role.questions} Q&A</span>
-          </div>
-          
-          <div className="mt-4 text-xs text-gray-500">
-            Last updated: 2 days ago
           </div>
         </div>
       </Link>

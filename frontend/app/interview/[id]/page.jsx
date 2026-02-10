@@ -1,136 +1,203 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Sparkles, Save, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle2, Loader2, Bookmark } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import Navbar from '@/components/Navbar'
 
-const difficulties = ['Beginner', 'Intermediate', 'Advanced']
-const questionTypes = ['MCQ', 'Coding', 'Conceptual', 'Scenario-based']
-
-const roleTopicsMap = {
-  '1': ['React', 'TypeScript', 'CSS'],
-  '2': ['Node.js', 'SQL', 'APIs'],
-  '3': ['MERN', 'DevOps', 'AWS'],
-  '4': ['Python', 'SQL', 'Tableau'],
-  '5': ['Docker', 'K8s', 'CI/CD'],
-  '6': ['Figma', 'Design Systems'],
-  '7': ['React Native', 'Swift'],
-  '8': ['Python', 'TensorFlow', 'ML'],
-  '9': ['Strategy', 'Analytics', 'Agile']
-}
-
-export default function InterviewGeneratorPage() {
-  const params = useParams()
-  const roleId = params?.id
-  
-  const [availableTopics, setAvailableTopics] = useState([])
-  const [selectedTopics, setSelectedTopics] = useState([])
-  const [difficulty, setDifficulty] = useState('Intermediate')
-  const [selectedQuestionTypes, setSelectedQuestionTypes] = useState([])
-  
-  const [topicSubTopicsMap, setTopicSubTopicsMap] = useState({})
-  const [selectedSubTopics, setSelectedSubTopics] = useState([])
-  
-  const [answerStyle, setAnswerStyle] = useState('')
-  
-  const [questions, setQuestions] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [showToast, setShowToast] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
-  const [expandedQuestion, setExpandedQuestion] = useState(null)
-
-  useEffect(() => {
-    if (roleId && roleTopicsMap[roleId]) {
-      setAvailableTopics(roleTopicsMap[roleId])
+const topicsData = {
+  1: { // Frontend Development
+    title: 'Frontend Development',
+    color: 'from-peach to-coral',
+    topics: {
+      'HTML': ['Basics & Structure', 'Elements & Attributes', 'Forms & Validation', 'Semantic HTML', 'Media (Audio, Video)', 'Canvas & SVG', 'HTML5 APIs', 'Geolocation', 'LocalStorage / SessionStorage', 'Web Workers'],
+      'CSS': ['Selectors & Specificity', 'Box Model', 'Flexbox', 'Grid', 'Positioning', 'Responsive Design', 'Media Queries', 'Animations & Transitions', 'Preprocessors (SASS basics)'],
+      'JavaScript': ['Variables & Data Types', 'Scope & Hoisting', 'Functions & Arrow Functions', 'DOM Manipulation', 'Events & Event Bubbling', 'ES6+ Features', 'Promises', 'Async / Await', 'Error Handling', 'Closures', 'Debouncing / Throttling'],
+      'React': ['JSX', 'Components (Functional vs Class)', 'Props & State', 'Hooks', 'useState', 'useEffect', 'useContext', 'Conditional Rendering', 'Lists & Keys', 'Routing (React Router)', 'API Integration', 'Performance Optimization']
     }
-  }, [roleId])
-
-  useEffect(() => {
-    if (selectedTopics.length > 0) {
-      selectedTopics.forEach(topic => {
-        if (!topicSubTopicsMap[topic]) {
-          fetchSubTopics(topic)
-        }
-      })
-    } else {
-      setTopicSubTopicsMap({})
-      setSelectedSubTopics([])
+  },
+  2: { // Backend Development
+    title: 'Backend Development',
+    color: 'from-lavender to-purple',
+    topics: {
+      'Node.js': ['Node Architecture', 'Event Loop', 'Express.js', 'Routing', 'Middleware', 'REST APIs', 'Authentication', 'JWT', 'Sessions', 'Validation', 'Error Handling', 'MongoDB Integration', 'Security (CORS, Rate Limiting)'],
+      'Python': ['Core Python', 'Virtual Environments', 'Django', 'Models', 'Views', 'Templates', 'ORM', 'Authentication', 'Flask', 'Blueprints', 'REST APIs', 'API Validation', 'Error Handling'],
+      'Java': ['Core Java', 'OOP Concepts', 'Spring Boot', 'Controllers', 'Services', 'Repositories', 'REST APIs', 'JPA / Hibernate', 'JDBC', 'Authentication & Authorization'],
+      'APIs': ['REST Principles', 'HTTP Methods', 'Status Codes', 'Authentication', 'Pagination', 'Versioning', 'GraphQL Basics']
     }
-  }, [selectedTopics])
-
-  const fetchSubTopics = async (topic) => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/questions/subtopics/${topic}`)
-      const data = await response.json()
-      if (data.success) {
-        setTopicSubTopicsMap(prev => ({
-          ...prev,
-          [topic]: data.subTopics || []
-        }))
-      }
-    } catch (error) {
-      console.error('Error fetching sub-topics:', error)
+  },
+  3: { // DevOps
+    title: 'DevOps',
+    color: 'from-blue to-lavender',
+    topics: {
+      'Docker': ['Containers vs VM', 'Docker Images', 'Dockerfile', 'Volumes', 'Networking', 'Docker Compose'],
+      'Kubernetes': ['Architecture', 'Pods', 'Deployments', 'Services', 'ConfigMaps', 'Secrets', 'Scaling'],
+      'CI/CD': ['CI vs CD', 'Jenkins', 'GitHub Actions', 'Pipelines', 'Automated Testing', 'Deployment Strategies'],
+      'Cloud': ['Compute', 'Storage', 'Networking', 'Monitoring']
+    }
+  },
+  4: { // DBMS
+    title: 'DBMS',
+    color: 'from-mint to-blue',
+    topics: {
+      'SQL Queries': ['SELECT', 'WHERE', 'JOIN (INNER, LEFT, RIGHT)', 'GROUP BY', 'HAVING', 'Subqueries'],
+      'Normalization': ['1NF', '2NF', '3NF', 'BCNF', 'Denormalization'],
+      'Transactions': ['ACID Properties', 'Commit / Rollback', 'Isolation Levels', 'Locks'],
+      'Indexes': ['Clustered', 'Non-Clustered', 'Composite', 'Performance Impact']
+    }
+  },
+  5: { // Operating System
+    title: 'Operating System',
+    color: 'from-yellow to-peach',
+    topics: {
+      'Processes': ['Process States', 'Context Switching', 'Threads', 'CPU Scheduling Algorithms'],
+      'Memory': ['Paging', 'Segmentation', 'Virtual Memory', 'Page Replacement Algorithms'],
+      'File System': ['File Types', 'Directory Structure', 'File Allocation', 'Permissions'],
+      'Synchronization': ['Critical Section', 'Mutex', 'Semaphore', 'Deadlocks', 'Starvation']
+    }
+  },
+  6: { // Computer Networks
+    title: 'Computer Networks',
+    color: 'from-pink to-coral',
+    topics: {
+      'Network Models': ['OSI Model', 'TCP/IP Model', 'Layer Functions'],
+      'Protocols': ['HTTP / HTTPS', 'TCP / UDP', 'FTP', 'SMTP', 'DNS'],
+      'IP Addressing': ['IPv4', 'IPv6', 'Subnetting', 'NAT'],
+      'Routing': ['Static Routing', 'Dynamic Routing', 'RIP', 'OSPF']
+    }
+  },
+  7: { // DSA
+    title: 'DSA (Data Structures & Algorithms)',
+    color: 'from-purple to-pink',
+    topics: {
+      'Common Topics': ['Arrays', 'Strings', 'Linked List', 'Stack', 'Queue', 'Trees', 'Graphs', 'Searching', 'Sorting', 'Recursion', 'Time & Space Complexity'],
+      'C++': ['STL', 'Vectors', 'Maps', 'Sets', 'Algorithms'],
+      'Java': ['Collections Framework', 'ArrayList', 'HashMap', 'TreeSet'],
+      'Python': ['Lists', 'Dictionaries', 'Sets', 'Tuples']
+    }
+  },
+  8: { // Cloud Computing
+    title: 'Cloud Computing',
+    color: 'from-coral to-lavender',
+    topics: {
+      'AWS': ['EC2', 'S3', 'Lambda', 'RDS', 'IAM', 'CloudWatch'],
+      'Azure': ['Virtual Machines', 'Blob Storage', 'Functions', 'SQL Database'],
+      'GCP': ['Compute Engine', 'Cloud Storage', 'Cloud Functions', 'BigQuery'],
+      'DevOps Integration': ['CI/CD on Cloud', 'Container Deployment', 'Monitoring & Logging']
+    }
+  },
+  9: { // AI & ML
+    title: 'AI & ML',
+    color: 'from-beige to-peach',
+    topics: {
+      'Python': ['NumPy', 'Pandas', 'Matplotlib', 'Scikit-learn'],
+      'ML Algorithms': ['Linear Regression', 'Logistic Regression', 'Decision Trees', 'KNN', 'SVM'],
+      'Deep Learning': ['Neural Networks', 'CNN', 'RNN', 'TensorFlow', 'PyTorch'],
+      'NLP': ['Tokenization', 'Text Cleaning', 'Bag of Words', 'Word Embeddings', 'Transformers', 'Sentiment Analysis']
     }
   }
+}
 
-  const saveQuestion = (question) => {
-    const saved = localStorage.getItem('savedQuestions')
-    const existing = saved ? JSON.parse(saved) : []
-    const newQuestion = {
-      ...question,
-      id: Date.now(),
-      createdAt: new Date().toISOString().split('T')[0],
-      bookmarked: false
-    }
-    const updated = [...existing, newQuestion]
-    localStorage.setItem('savedQuestions', JSON.stringify(updated))
-    setToastMessage('Question saved to vault!')
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
+export default function InterviewPage() {
+  const params = useParams()
+  const id = parseInt(params.id)
+  const data = topicsData[id]
+
+  const [expandedTopics, setExpandedTopics] = useState({})
+  const [selectedSubtopics, setSelectedSubtopics] = useState({})
+  const [questionType, setQuestionType] = useState('MCQ')
+  const [generatedQuestions, setGeneratedQuestions] = useState([])
+  const [expandedAnswers, setExpandedAnswers] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [savedQuestions, setSavedQuestions] = useState({})
+  const [savingQuestion, setSavingQuestion] = useState(null)
+
+  if (!data) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gradient-to-br from-cream via-peach/10 to-lavender/20 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Topic not found</h2>
+            <Link href="/dashboard">
+              <button className="px-6 py-3 rounded-xl gradient-pastel text-white font-semibold">
+                Back to Dashboard
+              </button>
+            </Link>
+          </div>
+        </div>
+      </ProtectedRoute>
+    )
   }
 
   const toggleTopic = (topic) => {
-    setSelectedTopics(prev => {
-      if (prev.includes(topic)) {
-        // Remove topic and its sub-topics from selection
-        const updatedTopics = prev.filter(t => t !== topic)
-        const topicSubTopics = topicSubTopicsMap[topic] || []
-        setSelectedSubTopics(prevSub => prevSub.filter(st => !topicSubTopics.includes(st)))
-        return updatedTopics
+    setExpandedTopics(prev => ({
+      ...prev,
+      [topic]: !prev[topic]
+    }))
+  }
+
+  const toggleSubtopic = (topic, subtopic) => {
+    setSelectedSubtopics(prev => {
+      const current = prev[topic] || []
+      if (current.includes(subtopic)) {
+        return {
+          ...prev,
+          [topic]: current.filter(s => s !== subtopic)
+        }
       } else {
-        return [...prev, topic]
+        return {
+          ...prev,
+          [topic]: [...current, subtopic]
+        }
       }
     })
   }
 
-  const toggleQuestionType = (type) => {
-    setSelectedQuestionTypes(prev => 
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    )
+  const toggleAnswer = (index) => {
+    setExpandedAnswers(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }))
   }
 
-  const toggleSubTopic = (subTopic) => {
-    setSelectedSubTopics(prev => 
-      prev.includes(subTopic) ? prev.filter(t => t !== subTopic) : [...prev, subTopic]
-    )
-  }
-
-  const generateQuestions = async () => {
-    if (selectedTopics.length === 0) {
-      alert('Please select at least one topic')
-      return
-    }
-
-    if (!answerStyle.trim()) {
-      alert('Please enter an answer style')
-      return
-    }
+  const handleGenerateQuestions = async () => {
+    const selected = Object.entries(selectedSubtopics).filter(([_, subtopics]) => subtopics.length > 0)
     
+    if (selected.length === 0) {
+      alert('Please select at least one subtopic')
+      return
+    }
+
     setLoading(true)
+    setGeneratedQuestions([])
+    setSavedQuestions({})
+    setExpandedAnswers({})
+
+    await generateQuestions(selected)
+  }
+
+  const handleGenerateMore = async () => {
+    const selected = Object.entries(selectedSubtopics).filter(([_, subtopics]) => subtopics.length > 0)
     
+    if (selected.length === 0) {
+      alert('Please select at least one subtopic')
+      return
+    }
+
+    setLoading(true)
+
+    await generateQuestions(selected)
+  }
+
+  const generateQuestions = async (selected) => {
     try {
+      // Prepare topics and subtopics for API
+      const topics = selected.map(([topic]) => topic)
+      const allSubtopics = selected.flatMap(([_, subtopics]) => subtopics)
+
       const response = await fetch('http://localhost:5000/api/questions/generate', {
         method: 'POST',
         headers: {
@@ -138,353 +205,338 @@ export default function InterviewGeneratorPage() {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          topics: selectedTopics,
-          experienceLevel: difficulty,
-          questionTypes: selectedQuestionTypes,
-          subTopics: selectedSubTopics,
-          programmingLanguage: null,
-          answerStyle: answerStyle
+          topics,
+          subTopics: allSubtopics,
+          experienceLevel: 'Mid-Level',
+          questionTypes: [questionType === 'MCQ' ? 'MCQ' : 'Conceptual'],
+          count: questionType === 'MCQ' ? 10 : 5
         })
       })
 
-      const data = await response.json()
-      
-      if (data.success) {
-        setQuestions(data.questions)
+      const result = await response.json()
+
+      if (result.success) {
+        setGeneratedQuestions(prev => [...prev, ...result.questions])
       } else {
-        alert(data.message || 'Failed to generate questions')
+        alert('Failed to generate questions: ' + result.message)
       }
     } catch (error) {
-      console.error('Error generating questions:', error)
+      console.error('Error:', error)
       alert('Failed to generate questions. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
+  const handleSaveQuestion = async (question, index) => {
+    setSavingQuestion(index)
+
+    try {
+      const response = await fetch('http://localhost:5000/api/questions/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          topic: data.title,
+          experienceLevel: 'Mid-Level',
+          questionTypes: [questionType === 'MCQ' ? 'MCQ' : 'Conceptual'],
+          question: question.question,
+          answer: question.answer,
+          hints: question.hints || '',
+          subTopics: question.subTopics || [],
+          programmingLanguage: question.programmingLanguage || null,
+          // Store MCQ options if available
+          optionA: question.optionA || '',
+          optionB: question.optionB || '',
+          optionC: question.optionC || '',
+          optionD: question.optionD || '',
+          explanation: question.explanation || ''
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setSavedQuestions(prev => ({ ...prev, [index]: true }))
+        // Show success message
+        setTimeout(() => {
+          setSavedQuestions(prev => ({ ...prev, [index]: 'saved' }))
+        }, 1000)
+      } else {
+        console.error('Save failed:', result)
+        alert('Failed to save question: ' + (result.message || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Failed to save question. Please try again.')
+    } finally {
+      setSavingQuestion(null)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream via-peach/10 to-lavender/20">
-      {/* Header */}
-      <header className="glass border-b border-pink/20 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/dashboard">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-coral to-purple bg-clip-text text-transparent">
-                Interview Prep AI
-              </h1>
-            </Link>
-          </div>
-        </div>
-      </header>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-cream via-peach/10 to-lavender/20">
+        <Navbar />
 
-      <main className="max-w-5xl mx-auto px-6 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h2 className="text-4xl font-bold mb-3">AI Interview Generator</h2>
-          <p className="text-gray-600 mb-12">Customize your interview preparation</p>
-        </motion.div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Configuration Panel */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Main Topic Selection */}
-            <div className="bg-white rounded-2xl p-6 card-glow border border-pink/10">
-              <h3 className="font-semibold text-lg mb-4">Select Topics</h3>
-              <div className="flex flex-wrap gap-3">
-                {availableTopics.map(topic => (
-                  <button
-                    key={topic}
-                    onClick={() => toggleTopic(topic)}
-                    className={`px-4 py-2 rounded-full transition-all ${
-                      selectedTopics.includes(topic)
-                        ? 'gradient-pastel text-white'
-                        : 'bg-peach/30 text-gray-700 hover:bg-peach/50'
-                    }`}
-                  >
-                    {topic}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Sub-Topics */}
-            {selectedTopics.length > 0 && Object.keys(topicSubTopicsMap).length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl p-6 card-glow border border-pink/10"
-              >
-                <h3 className="font-semibold text-lg mb-4">Select Sub-Topics (Optional)</h3>
-                {selectedTopics.map(topic => {
-                  const subTopics = topicSubTopicsMap[topic] || []
-                  if (subTopics.length === 0) return null
-                  return (
-                    <div key={topic} className="mb-4 last:mb-0">
-                      <p className="text-sm font-medium text-gray-600 mb-2">{topic}:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {subTopics.map(subTopic => (
-                          <button
-                            key={`${topic}-${subTopic}`}
-                            onClick={() => toggleSubTopic(subTopic)}
-                            className={`px-3 py-1.5 text-sm rounded-full transition-all ${
-                              selectedSubTopics.includes(subTopic)
-                                ? 'bg-gradient-to-r from-coral to-pink text-white'
-                                : 'bg-peach/30 text-gray-700 hover:bg-peach/50'
-                            }`}
-                          >
-                            {subTopic}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
-              </motion.div>
-            )}
-
-            {/* Question Types */}
-            <div className="bg-white rounded-2xl p-6 card-glow border border-pink/10">
-              <h3 className="font-semibold text-lg mb-4">Question Types</h3>
-              <div className="flex flex-wrap gap-3">
-                {questionTypes.map(type => (
-                  <button
-                    key={type}
-                    onClick={() => toggleQuestionType(type)}
-                    className={`px-4 py-2 rounded-full transition-all ${
-                      selectedQuestionTypes.includes(type)
-                        ? 'bg-gradient-to-r from-purple to-lavender text-white'
-                        : 'bg-lavender/30 text-gray-700 hover:bg-lavender/50'
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Difficulty */}
-            <div className="bg-white rounded-2xl p-6 card-glow border border-pink/10">
-              <h3 className="font-semibold text-lg mb-4">Difficulty Level</h3>
-              <div className="flex gap-3">
-                {difficulties.map(level => (
-                  <button
-                    key={level}
-                    onClick={() => setDifficulty(level)}
-                    className={`flex-1 py-3 rounded-xl transition-all ${
-                      difficulty === level
-                        ? 'gradient-pastel text-white'
-                        : 'bg-lavender/30 text-gray-700 hover:bg-lavender/50'
-                    }`}
-                  >
-                    {level}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Answer Style */}
-            <div className="bg-white rounded-2xl p-6 card-glow border border-pink/10">
-              <h3 className="font-semibold text-lg mb-4">Answer Style</h3>
-              <input
-                type="text"
-                value={answerStyle}
-                onChange={(e) => setAnswerStyle(e.target.value)}
-                placeholder="e.g., detailed, concise, with examples"
-                className="w-full px-4 py-3 rounded-xl border border-pink/20 focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-all"
-              />
-              <p className="text-xs text-gray-500 mt-2">Describe how you want answers explained</p>
-            </div>
-
-            {/* Generate Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={generateQuestions}
-              disabled={loading}
-              className="w-full py-4 rounded-xl gradient-pastel text-white font-semibold text-lg shadow-soft hover:shadow-glow transition-all flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>Generating...</>
-              ) : (
-                <>
-                  <Sparkles size={20} />
-                  Generate Questions
-                </>
-              )}
-            </motion.button>
-          </div>
-
-          {/* Preview Panel */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl p-6 card-glow border border-pink/10 sticky top-24">
-              <h3 className="font-semibold text-lg mb-4">Selection Summary</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <span className="text-gray-600">Topics:</span>
-                  <span className="ml-2 font-medium">{selectedTopics.length > 0 ? selectedTopics.join(', ') : 'None'}</span>
-                </div>
-                {selectedSubTopics.length > 0 && (
-                  <div>
-                    <span className="text-gray-600">Sub-Topics:</span>
-                    <span className="ml-2 font-medium">{selectedSubTopics.length}</span>
-                  </div>
-                )}
-                <div>
-                  <span className="text-gray-600">Question Types:</span>
-                  <span className="ml-2 font-medium">{selectedQuestionTypes.length || 'None'}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Difficulty:</span>
-                  <span className="ml-2 font-medium">{difficulty}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Answer Style:</span>
-                  <span className="ml-2 font-medium">{answerStyle || 'Not specified'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Generated Questions - Accordion Style */}
-        {questions.length > 0 && (
+        <main className="max-w-7xl mx-auto px-6 py-12">
+          {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-12 space-y-4"
+            className="mb-8"
           >
-            <h3 className="text-2xl font-bold mb-6">Generated Questions</h3>
-            <div className="space-y-3">
-              {questions.map((q, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-xl card-glow border border-pink/10 overflow-hidden"
-                >
-                  {/* Question Header - Clickable */}
-                  <button
-                    onClick={() => setExpandedQuestion(expandedQuestion === index ? null : index)}
-                    className="w-full p-6 text-left hover:bg-peach/5 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          <span className="text-sm px-3 py-1 rounded-full bg-peach/30">{q.topic}</span>
-                          <span className="text-sm px-3 py-1 rounded-full bg-lavender/30">{q.experienceLevel}</span>
-                          {q.questionTypes && q.questionTypes.map((type) => (
-                            <span key={type} className="text-sm px-3 py-1 rounded-full bg-purple/30">{type}</span>
-                          ))}
-                        </div>
-                        <p className="text-gray-800 font-medium">
-                          {index + 1}. {q.question}
-                        </p>
-                      </div>
-                      <motion.div
-                        animate={{ rotate: expandedQuestion === index ? 180 : 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="flex-shrink-0"
-                      >
-                        <ChevronDown className="text-gray-400" size={24} />
-                      </motion.div>
-                    </div>
-                  </button>
-
-                  {/* Expanded Content */}
-                  {expandedQuestion === index && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="border-t border-pink/10"
-                    >
-                      <div className="p-6 space-y-4">
-                        {/* Answer Section */}
-                        {q.answer && (
-                          <div className="p-4 bg-peach/10 rounded-lg">
-                            <p className="text-sm font-semibold text-gray-700 mb-2">Answer:</p>
-                            <div className="text-sm text-gray-600 whitespace-pre-wrap">
-                              {q.answer}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Explanation Section - NEW */}
-                        {q.explanation && (
-                          <div className="p-4 bg-lavender/10 rounded-lg">
-                            <p className="text-sm font-semibold text-gray-700 mb-2">📝 Explanation:</p>
-                            <div className="text-sm text-gray-600 whitespace-pre-wrap">
-                              {q.explanation}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Code Section - NEW */}
-                        {q.code && (
-                          <div className="p-4 bg-blue/10 rounded-lg">
-                            <p className="text-sm font-semibold text-gray-700 mb-2">💻 Code:</p>
-                            <pre className="text-sm text-gray-800 font-mono overflow-x-auto">
-                              <code>{q.code}</code>
-                            </pre>
-                          </div>
-                        )}
-
-                        {/* Hints Section */}
-                        {q.hints && (
-                          <div className="p-3 bg-yellow/10 rounded-lg">
-                            <p className="text-sm font-semibold text-gray-700 mb-1">💡 Hints:</p>
-                            <p className="text-sm text-gray-600">{q.hints}</p>
-                          </div>
-                        )}
-
-                        {/* Sub-topics if available */}
-                        {q.subTopics && q.subTopics.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            <span className="text-xs text-gray-500">Related topics:</span>
-                            {q.subTopics.map((st, i) => (
-                              <span key={i} className="text-xs px-2 py-1 rounded-full bg-mint/30 text-gray-600">
-                                {st}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Save Button */}
-                        <div className="pt-4 border-t border-pink/10">
-                          <button
-                            onClick={() => saveQuestion(q)}
-                            className="w-full py-3 rounded-lg bg-gradient-to-r from-coral to-pink text-white font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                          >
-                            <Save size={18} />
-                            Save to Vault
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </motion.div>
-              ))}
+            <Link href="/dashboard">
+              <button className="flex items-center gap-2 text-gray-600 hover:text-coral transition mb-4">
+                <ArrowLeft size={20} />
+                Back to Dashboard
+              </button>
+            </Link>
+            
+            <div className={`inline-block px-6 py-3 rounded-2xl bg-gradient-to-br ${data.color} mb-4`}>
+              <h1 className="text-3xl font-bold text-white">{data.title}</h1>
             </div>
+            
+            <p className="text-gray-600 text-lg">Select subtopics and question type to generate questions</p>
           </motion.div>
-        )}
-      </main>
 
-      {/* Toast Notification */}
-      {showToast && (
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 50 }}
-          className="fixed bottom-8 right-8 glass rounded-xl p-4 border border-pink/20 shadow-glow flex items-center gap-3"
-        >
-          <Save className="text-coral" size={20} />
-          <span className="font-medium">{toastMessage}</span>
-        </motion.div>
-      )}
-    </div>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Left Panel - Topics Selection */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl p-6 card-glow border border-pink/10 sticky top-24">
+                <h3 className="text-xl font-bold mb-4">Select Topics</h3>
+                
+                {/* Collapsible Topics */}
+                <div className="space-y-2 mb-6">
+                  {Object.entries(data.topics).map(([topic, subtopics]) => (
+                    <div key={topic} className="border border-gray-200 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => toggleTopic(topic)}
+                        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition"
+                      >
+                        <span className="font-semibold text-sm">{topic}</span>
+                        {expandedTopics[topic] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      </button>
+                      
+                      <AnimatePresence>
+                        {expandedTopics[topic] && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="p-3 space-y-1 bg-white">
+                              {subtopics.map((subtopic) => {
+                                const isSelected = selectedSubtopics[topic]?.includes(subtopic)
+                                return (
+                                  <button
+                                    key={subtopic}
+                                    onClick={() => toggleSubtopic(topic, subtopic)}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-xs transition flex items-center gap-2 ${
+                                      isSelected
+                                        ? 'bg-coral/10 text-coral font-medium'
+                                        : 'hover:bg-gray-50 text-gray-700'
+                                    }`}
+                                  >
+                                    {isSelected && <CheckCircle2 size={14} />}
+                                    {subtopic}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Question Type Selection */}
+                <div className="mb-6">
+                  <h4 className="font-semibold mb-3 text-sm">Question Type</h4>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setQuestionType('MCQ')}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition ${
+                        questionType === 'MCQ'
+                          ? 'bg-gradient-to-r from-coral to-pink text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      MCQs (10 questions)
+                    </button>
+                    <button
+                      onClick={() => setQuestionType('Conceptual')}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition ${
+                        questionType === 'Conceptual'
+                          ? 'bg-gradient-to-r from-coral to-pink text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Conceptual (5 questions)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Generate Button */}
+                <button
+                  onClick={handleGenerateQuestions}
+                  disabled={loading}
+                  className="w-full py-3 rounded-xl gradient-pastel text-white font-semibold shadow-soft hover:shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate Questions'
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Right Panel - Generated Questions */}
+            <div className="lg:col-span-2">
+              {generatedQuestions.length === 0 && !loading && (
+                <div className="bg-white rounded-2xl p-12 card-glow border border-pink/10 text-center">
+                  <p className="text-gray-500">Select topics and click "Generate Questions" to start</p>
+                </div>
+              )}
+
+              {loading && (
+                <div className="bg-white rounded-2xl p-12 card-glow border border-pink/10 text-center">
+                  <Loader2 className="animate-spin mx-auto mb-4 text-coral" size={40} />
+                  <p className="text-gray-600">Generating {questionType === 'MCQ' ? '10 MCQs' : '5 Conceptual Questions'}...</p>
+                </div>
+              )}
+
+              {generatedQuestions.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-bold mb-4">
+                    {questionType === 'MCQ' ? 'Multiple Choice Questions' : 'Conceptual Questions'}
+                  </h3>
+                  
+                  {generatedQuestions.map((q, index) => (
+                    <div key={index} className="bg-white rounded-2xl p-6 card-glow border border-pink/10">
+                      <div className="flex items-start gap-3 mb-4">
+                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-coral to-pink text-white flex items-center justify-center font-bold text-sm">
+                          {index + 1}
+                        </span>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-800">{q.question}</p>
+                        </div>
+                        
+                        {/* Save Button */}
+                        <button
+                          onClick={() => handleSaveQuestion(q, index)}
+                          disabled={savingQuestion === index || savedQuestions[index]}
+                          className={`flex-shrink-0 p-2 rounded-lg transition-all ${
+                            savedQuestions[index] === 'saved'
+                              ? 'bg-green-100 text-green-600'
+                              : savedQuestions[index]
+                              ? 'bg-coral/20 text-coral'
+                              : 'bg-gray-100 text-gray-600 hover:bg-coral/20 hover:text-coral'
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          title={savedQuestions[index] ? 'Saved to vault' : 'Save to vault'}
+                        >
+                          {savingQuestion === index ? (
+                            <Loader2 className="animate-spin" size={18} />
+                          ) : (
+                            <Bookmark 
+                              size={18} 
+                              fill={savedQuestions[index] ? 'currentColor' : 'none'}
+                            />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* MCQ Options */}
+                      {questionType === 'MCQ' && q.optionA && (
+                        <div className="ml-11 space-y-2 mb-4">
+                          {['A', 'B', 'C', 'D'].map((letter) => {
+                            const option = q[`option${letter}`]
+                            const isCorrect = q.answer === letter
+                            return (
+                              <div
+                                key={letter}
+                                className={`p-3 rounded-lg border-2 ${
+                                  expandedAnswers[index] && isCorrect
+                                    ? 'border-green-500 bg-green-50'
+                                    : 'border-gray-200 bg-gray-50'
+                                }`}
+                              >
+                                <span className="font-semibold">{letter})</span> {option}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {/* Show Answer Button */}
+                      <div className="ml-11">
+                        <button
+                          onClick={() => toggleAnswer(index)}
+                          className="flex items-center gap-2 text-coral hover:text-pink transition font-medium text-sm"
+                        >
+                          {expandedAnswers[index] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                          {expandedAnswers[index] ? 'Hide Answer' : 'Show Answer'}
+                        </button>
+
+                        <AnimatePresence>
+                          {expandedAnswers[index] && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="mt-3 p-4 bg-green-50 rounded-lg border border-green-200"
+                            >
+                              {questionType === 'MCQ' && (
+                                <p className="font-semibold text-green-700 mb-2">
+                                  Correct Answer: {q.answer}
+                                </p>
+                              )}
+                              <p className="text-gray-700 text-sm">{q.explanation}</p>
+                              {q.code && (
+                                <pre className="mt-3 p-3 bg-gray-900 text-gray-100 rounded-lg text-xs overflow-x-auto">
+                                  <code>{q.code}</code>
+                                </pre>
+                              )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Generate More Questions Button */}
+                  <div className="flex justify-center pt-4">
+                    <button
+                      onClick={handleGenerateMore}
+                      disabled={loading}
+                      className="px-8 py-3 rounded-xl bg-gradient-to-r from-lavender to-purple text-white font-semibold shadow-soft hover:shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="animate-spin" size={18} />
+                          Generating More...
+                        </>
+                      ) : (
+                        <>
+                          Generate More Questions
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
+    </ProtectedRoute>
   )
 }

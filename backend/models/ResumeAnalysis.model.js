@@ -20,18 +20,48 @@ const resumeAnalysisSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
+  selectionProbability: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  breakdown: {
+    skillsScore: Number,
+    projectsScore: Number,
+    keywordsScore: Number,
+    educationScore: Number,
+    certificationsScore: Number
+  },
+  matchedSkills: [{
+    type: String
+  }],
+  partialSkills: [{
+    resume: String,
+    jd: String,
+    similarity: Number
+  }],
+  missingSkills: [{
+    type: String
+  }],
   matchedKeywords: [{
     type: String
   }],
   missingKeywords: [{
     type: String
   }],
-  missingSkills: [{
+  projectRelevance: [{
+    name: String,
+    relevance: Number,
+    reason: String
+  }],
+  projectGaps: [{
     type: String
   }],
-  weakSections: [{
-    section: String,
-    feedback: String
+  matchedCertifications: [{
+    type: String
+  }],
+  missingCertifications: [{
+    type: String
   }],
   improvements: [{
     area: String,
@@ -39,7 +69,8 @@ const resumeAnalysisSchema = new mongoose.Schema({
     priority: {
       type: String,
       enum: ['High', 'Medium', 'Low']
-    }
+    },
+    impact: String
   }],
   fileName: {
     type: String

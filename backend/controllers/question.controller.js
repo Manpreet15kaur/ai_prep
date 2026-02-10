@@ -68,7 +68,8 @@ export const generateAIQuestions = async (req, res) => {
       questionTypes,
       subTopics,
       programmingLanguage,
-      answerStyle
+      answerStyle,
+      count  // NEW: Number of questions to generate
     } = req.body;
 
     // CHANGED: Validate topics array
@@ -93,7 +94,8 @@ export const generateAIQuestions = async (req, res) => {
       questionTypes,
       subTopics: subTopics || [],
       programmingLanguage: programmingLanguage || null,
-      answerStyle: answerStyle || 'detailed'
+      answerStyle: answerStyle || 'detailed',
+      count: count || 3  // NEW: Pass count parameter
     });
 
     res.status(200).json({
@@ -123,7 +125,12 @@ export const saveQuestion = async (req, res) => {
       answer, 
       hints,
       subTopics,
-      programmingLanguage
+      programmingLanguage,
+      optionA,
+      optionB,
+      optionC,
+      optionD,
+      explanation
     } = req.body;
 
     if (!topic || !experienceLevel || !question || !answer) {
@@ -143,7 +150,12 @@ export const saveQuestion = async (req, res) => {
       answer,
       hints,
       subTopics: subTopics || [],
-      programmingLanguage: programmingLanguage || null
+      programmingLanguage: programmingLanguage || null,
+      optionA: optionA || '',
+      optionB: optionB || '',
+      optionC: optionC || '',
+      optionD: optionD || '',
+      explanation: explanation || ''
     });
 
     // Add to user's saved questions
@@ -158,6 +170,7 @@ export const saveQuestion = async (req, res) => {
       question: newQuestion
     });
   } catch (error) {
+    console.error('Error saving question:', error);
     res.status(500).json({
       success: false,
       message: 'Error saving question',

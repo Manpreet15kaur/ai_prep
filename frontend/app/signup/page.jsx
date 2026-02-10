@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Mail, Lock, User, Sparkles, AlertCircle, CheckCircle } from 'lucide-react'
+import { Mail, Lock, User, Sparkles, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { register } from '@/lib/auth'
 
@@ -16,6 +16,7 @@ export default function SignupPage() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleChange = (e) => {
     setFormData({
@@ -92,7 +93,7 @@ export default function SignupPage() {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Sarah Johnson"
+                  placeholder="Enter your full name"
                   required
                   className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border border-pink/10 focus:outline-none focus:border-coral transition-all"
                 />
@@ -120,15 +121,22 @@ export default function SignupPage() {
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
                   required
                   minLength={6}
-                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border border-pink/10 focus:outline-none focus:border-coral transition-all"
+                  className="w-full pl-12 pr-12 py-3 rounded-xl bg-white border border-pink/10 focus:outline-none focus:border-coral transition-all"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-coral transition"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
               <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
             </div>

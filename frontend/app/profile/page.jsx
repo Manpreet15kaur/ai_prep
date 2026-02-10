@@ -30,29 +30,21 @@ export default function ProfilePage() {
     try {
       const userData = await getCurrentUser()
       setUserData(userData)
-        
-        // Get saved questions from localStorage
-        const savedQuestions = localStorage.getItem('savedQuestions')
-        const questions = savedQuestions ? JSON.parse(savedQuestions) : []
-        
-        // Calculate stats based on actual user data
-        const questionsCount = questions.length
-        const calculatedStats = {
-          readinessScore: Math.min(100, Math.floor((questionsCount / 100) * 100)),
-          questionsCompleted: questionsCount,
-          studyStreak: calculateStreak(questions),
-          resumeScore: userData.resumeAnalysesCount > 0 ? 75 : 0,
-          totalHours: Math.floor(questionsCount * 0.15)
-        }
-        setStats(calculatedStats)
+      
+      // Use stats from backend
+      if (userData.stats) {
+        setStats(userData.stats)
+      }
 
-        // Calculate role progress based on saved questions
-        const progressByRole = calculateRoleProgress(questions)
+      // Calculate role progress based on topic progress
+      if (userData.stats?.topicProgress) {
+        const progressByRole = calculateRoleProgress(userData.stats.topicProgress)
         setRoleProgress(progressByRole)
+      }
 
-        // Generate recent activity from saved questions
-        const activity = generateRecentActivity(questions, userData.resumeAnalysesCount)
-        setRecentActivity(activity)
+      // Generate recent activity from saved questions
+      const activity = generateRecentActivity(userData.savedQuestions || [], userData.resumeAnalyses || [])
+      setRecentActivity(activity)
     } catch (error) {
       console.error('Error fetching profile:', error)
       router.push('/login')
@@ -61,83 +53,65 @@ export default function ProfilePage() {
     }
   }
 
-  const calculateStreak = (questions) => {
-    if (questions.length === 0) return 0
-    
-    const dates = questions
-      .map(q => q.createdAt)
-      .filter(Boolean)
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-    
-    if (dates.length === 0) return 0
-    
-    let streak = 1
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    for (let i = 0; i < dates.length - 1; i++) {
-      const current = new Date(dates[i])
-      const next = new Date(dates[i + 1])
-      current.setHours(0, 0, 0, 0)
-      next.setHours(0, 0, 0, 0)
-      
-      const diffDays = Math.floor((current.getTime() - next.getTime()) / (1000 * 60 * 60 * 24))
-      if (diffDays === 1) {
-        streak++
-      } else {
-        break
-      }
-    }
-    
-    return streak
-  }
-
-  const calculateRoleProgress = (questions) => {
+  const calculateRoleProgress = (topicProgress) => {
     const roleMap = {}
     
-    questions.forEach(q => {
-      const topic = q.topic || 'General'
+    // Map topics to subjects (matching dashboard subjects)
+    const topicToSubject = {
+      'HTML': 'Frontend Development',
+      'CSS': 'Frontend Development',
+      'JavaScript': 'Frontend Development',
+      'React': 'Frontend Development',
+      'Node.js': 'Backend Development',
+      'Python': 'Backend Development',
+      'Java': 'Backend Development',
+      'APIs': 'Backend Development',
+      'Docker': 'DevOps',
+      'Kubernetes': 'DevOps',
+      'CI/CD': 'DevOps',
+      'Cloud': 'DevOps',
+      'SQL Queries': 'DBMS',
+      'Normalization': 'DBMS',
+      'Transactions': 'DBMS',
+      'Indexes': 'DBMS',
+      'Processes': 'Operating System',
+      'Memory': 'Operating System',
+      'File System': 'Operating System',
+      'Synchronization': 'Operating System',
+      'Network Models': 'Computer Networks',
+      'Protocols': 'Computer Networks',
+      'IP Addressing': 'Computer Networks',
+      'Routing': 'Computer Networks',
+      'Common Topics': 'DSA (Data Structures & Algorithms)',
+      'C++': 'DSA (Data Structures & Algorithms)',
+      'AWS': 'Cloud Computing',
+      'Azure': 'Cloud Computing',
+      'GCP': 'Cloud Computing',
+      'ML Algorithms': 'AI & ML',
+      'Deep Learning': 'AI & ML',
+      'NLP': 'AI & ML'
+    }
+    
+    Object.entries(topicProgress).forEach(([topic, count]) => {
+      const subject = topicToSubject[topic] || topic
       
-      // Map topics to roles
-      let role = 'General'
-      if (['React', 'TypeScript', 'CSS', 'HTML', 'JavaScript'].includes(topic)) {
-        role = 'Frontend Developer'
-      } else if (['Node.js', 'SQL', 'APIs', 'Express'].includes(topic)) {
-        role = 'Backend Developer'
-      } else if (['MERN', 'DevOps', 'AWS', 'Docker'].includes(topic)) {
-        role = 'Full Stack Developer'
-      } else if (['Python', 'Tableau', 'Data Visualization'].includes(topic)) {
-        role = 'Data Analyst'
-      } else if (['K8s', 'CI/CD', 'Docker'].includes(topic)) {
-        role = 'DevOps Engineer'
-      } else if (['Figma', 'Design Systems'].includes(topic)) {
-        role = 'UI/UX Designer'
-      } else if (['React Native', 'Swift'].includes(topic)) {
-        role = 'Mobile App Developer'
-      } else if (['TensorFlow', 'ML', 'AI'].includes(topic)) {
-        role = 'AI/ML Engineer'
-      } else if (['Strategy', 'Analytics', 'Agile'].includes(topic)) {
-        role = 'Product Manager'
+      if (!roleMap[subject]) {
+        roleMap[subject] = 0
       }
-      
-      if (!roleMap[role]) {
-        roleMap[role] = { questions: 0, topics: new Set() }
-      }
-      roleMap[role].questions++
-      roleMap[role].topics.add(topic)
+      roleMap[subject] += count
     })
     
     return Object.entries(roleMap)
-      .map(([role, data]) => ({
-        role,
-        questions: data.questions,
-        progress: Math.min(100, Math.floor((data.questions / 50) * 100))
+      .map(([subject, questions]) => ({
+        role: subject,
+        questions,
+        progress: Math.min(100, Math.floor((questions / 50) * 100))
       }))
       .sort((a, b) => b.questions - a.questions)
       .slice(0, 3)
   }
 
-  const generateRecentActivity = (questions, resumeCount) => {
+  const generateRecentActivity = (questions, resumeAnalyses) => {
     const activities = []
     
     // Add recent saved questions
@@ -147,22 +121,28 @@ export default function ProfilePage() {
     
     recentQuestions.forEach(q => {
       activities.push({
-        date: q.createdAt,
+        date: new Date(q.createdAt).toLocaleDateString(),
         action: `Saved ${q.topic || 'question'} to vault`,
         type: 'save'
       })
     })
     
-    // Add resume analysis if exists
-    if (resumeCount > 0) {
+    // Add recent resume analyses
+    const recentResumes = resumeAnalyses
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 2)
+    
+    recentResumes.forEach(r => {
       activities.push({
-        date: new Date().toISOString().split('T')[0],
-        action: `Analyzed resume`,
+        date: new Date(r.createdAt).toLocaleDateString(),
+        action: `Analyzed resume (Score: ${r.atsScore})`,
         type: 'resume'
       })
-    }
+    })
     
-    return activities.slice(0, 4)
+    return activities
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5)
   }
 
   if (loading) {
@@ -196,7 +176,9 @@ export default function ProfilePage() {
             </div>
             <div>
               <h2 className="text-4xl font-bold mb-2">{userData.name}</h2>
-              <p className="text-gray-600">{userData.email} • Member since {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
+              <p className="text-gray-600">
+                {userData.email} • Member since {new Date(userData.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+              </p>
             </div>
           </div>
         </motion.div>

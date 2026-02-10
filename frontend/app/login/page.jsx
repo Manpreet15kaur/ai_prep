@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Mail, Lock, Sparkles, AlertCircle } from 'lucide-react'
+import { Mail, Lock, Sparkles, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { login } from '@/lib/auth'
 
@@ -15,6 +15,7 @@ export default function LoginPage() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleChange = (e) => {
     setFormData({
@@ -96,15 +97,22 @@ export default function LoginPage() {
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
                   required
                   minLength={6}
-                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border border-pink/10 focus:outline-none focus:border-coral transition-all"
+                  className="w-full pl-12 pr-12 py-3 rounded-xl bg-white border border-pink/10 focus:outline-none focus:border-coral transition-all"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-coral transition"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 

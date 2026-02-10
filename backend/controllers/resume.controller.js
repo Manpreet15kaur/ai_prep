@@ -1,6 +1,6 @@
 import ResumeAnalysis from '../models/ResumeAnalysis.model.js';
 import User from '../models/User.model.js';
-import { analyzeResume } from '../services/ai.service.js';
+import { analyzeResumeATS } from '../services/ats.engine.js';
 import { extractTextFromPDF } from '../utils/pdfParser.js';
 
 // @desc    Analyze resume with job description
@@ -27,8 +27,8 @@ export const analyzeResumeWithJD = async (req, res) => {
     // Extract text from PDF
     const resumeText = await extractTextFromPDF(req.file.buffer);
 
-    // Call AI service for analysis
-    const analysis = await analyzeResume({
+    // Call ATS Engine for deterministic analysis
+    const analysis = await analyzeResumeATS({
       resumeText,
       jobDescription
     });
@@ -54,6 +54,7 @@ export const analyzeResumeWithJD = async (req, res) => {
       analysis: resumeAnalysis
     });
   } catch (error) {
+    console.error('Resume Analysis Error:', error);
     res.status(500).json({
       success: false,
       message: 'Error analyzing resume',
