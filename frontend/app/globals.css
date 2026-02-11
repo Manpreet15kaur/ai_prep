@@ -6,6 +6,13 @@
   body {
     @apply bg-cream text-gray-800;
   }
+  
+  /* Button active states - darken on click */
+  button:active,
+  a:active {
+    filter: brightness(0.85);
+    transform: scale(0.98);
+  }
 }
 
 @layer utilities {
@@ -17,6 +24,10 @@
   
   .gradient-pastel {
     background: linear-gradient(135deg, #FFD4C4 0%, #E6D5F5 50%, #FFB6C1 100%);
+  }
+  
+  .gradient-pastel:active {
+    filter: brightness(0.8);
   }
   
   .card-glow {

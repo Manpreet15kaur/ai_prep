@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 const topicsData = {
   1: { // Frontend Development
@@ -282,10 +283,10 @@ export default function InterviewPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-cream via-peach/10 to-lavender/20">
+      <div className="min-h-screen bg-gradient-to-br from-cream via-peach/10 to-lavender/20 flex flex-col">
         <Navbar />
 
-        <main className="max-w-7xl mx-auto px-6 py-12">
+        <main className="w-full max-w-[1400px] mx-auto px-6 py-12 flex-1">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -540,6 +541,7 @@ export default function InterviewPage() {
             </div>
           </div>
         </main>
+        <Footer />
       </div>
     </ProtectedRoute>
   )

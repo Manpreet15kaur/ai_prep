@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Search, Edit2, Trash2, Bookmark } from 'lucide-react'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 export default function VaultPage() {
   const [questions, setQuestions] = useState([])
@@ -110,10 +111,10 @@ export default function VaultPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-cream via-peach/10 to-lavender/20">
+      <div className="min-h-screen bg-gradient-to-br from-cream via-peach/10 to-lavender/20 flex flex-col">
         <Navbar />
 
-        <main className="max-w-7xl mx-auto px-6 py-12">
+        <main className="w-full max-w-[1400px] mx-auto px-6 py-12 flex-1">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -233,6 +234,7 @@ export default function VaultPage() {
           ))}
         </div>
       </main>
+      <Footer />
     </div>
     </ProtectedRoute>
   )
