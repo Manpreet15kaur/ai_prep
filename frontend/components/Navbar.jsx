@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LogOut, Sparkles, X, AlertTriangle } from 'lucide-react'
+import { LogOut, Sparkles, X, AlertTriangle, Menu } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { logout } from '@/lib/auth'
 
 export default function Navbar() {
   const pathname = usePathname()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -26,18 +27,19 @@ export default function Navbar() {
   return (
     <>
       <header className="glass border-b border-pink/20 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex justify-between items-center">
             <Link href="/dashboard">
               <div className="flex items-center gap-2">
                 <Sparkles className="text-coral" size={24} />
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-coral to-purple bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-coral to-purple bg-clip-text text-transparent">
                   Interview Prep AI
                 </h1>
               </div>
             </Link>
             
-            <nav className="flex gap-6 items-center">
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex gap-6 items-center">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -60,7 +62,55 @@ export default function Navbar() {
                 Logout
               </button>
             </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
+
+          {/* Mobile Navigation */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.nav
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="lg:hidden overflow-hidden"
+              >
+                <div className="py-4 space-y-2">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`block px-4 py-3 rounded-lg transition ${
+                        pathname === link.href
+                          ? 'bg-coral/10 text-coral font-medium'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                  
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      setShowLogoutModal(true)
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </div>
+              </motion.nav>
+            )}
+          </AnimatePresence>
         </div>
       </header>
 
