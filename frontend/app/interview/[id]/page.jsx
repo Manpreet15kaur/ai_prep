@@ -198,7 +198,9 @@ export default function InterviewPage() {
       const topics = selected.map(([topic]) => topic)
       const allSubtopics = selected.flatMap(([_, subtopics]) => subtopics)
 
-      const response = await fetch('http://localhost:5000/api/questions/generate', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+
+      const response = await fetch(`${API_URL}/questions/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -232,7 +234,9 @@ export default function InterviewPage() {
     setSavingQuestion(index)
 
     try {
-      const response = await fetch('http://localhost:5000/api/questions/save', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+
+      const response = await fetch(`${API_URL}/questions/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

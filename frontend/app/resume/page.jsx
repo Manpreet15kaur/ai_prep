@@ -36,7 +36,9 @@ export default function ResumeAnalyzerPage() {
       formData.append('resume', file)
       formData.append('jobDescription', jobDescription)
 
-      const response = await fetch('http://localhost:5000/api/resume/analyze', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+
+      const response = await fetch(`${API_URL}/resume/analyze`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
