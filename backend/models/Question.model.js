@@ -14,11 +14,11 @@ const questionSchema = new mongoose.Schema({
   experienceLevel: {
     type: String,
     required: true,
-    enum: ['Beginner', 'Intermediate', 'Advanced', 'Mid-Level', 'Entry', 'Senior']
+    enum: ['Entry', 'Mid-Level', 'Senior']
   },
   questionTypes: [{
     type: String,
-    enum: ['MCQ', 'Coding', 'Conceptual', 'Scenario-based', 'HR/Behavioral']
+    enum: ['MCQ', 'Conceptual']
   }],
   subTopics: [{
     type: String,

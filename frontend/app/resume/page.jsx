@@ -64,10 +64,17 @@ export default function ResumeAnalyzerPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-cream via-peach/10 to-lavender/20 flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-purple/30 via-pink/40 to-coral/30 flex flex-col relative overflow-hidden">
+        {/* Background gradient blobs */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-electric-violet/20 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-coral-vibrant/20 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-lavender/15 rounded-full blur-3xl"></div>
+        </div>
+        
         <Navbar />
 
-        <main className="w-full max-w-[1400px] mx-auto px-6 py-12 flex-1">
+        <main className="w-full max-w-[1400px] mx-auto px-6 py-12 flex-1 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -77,7 +84,7 @@ export default function ResumeAnalyzerPage() {
           </motion.div>
 
           {/* Input Section - Compact */}
-          <div className="bg-white rounded-2xl p-6 card-glow border border-pink/10 mb-8">
+          <div className="glass-strong rounded-3xl p-8 card-glow mb-8">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Resume Upload */}
               <div>
@@ -127,7 +134,7 @@ export default function ResumeAnalyzerPage() {
             <button
               onClick={analyzeResume}
               disabled={!file || !jobDescription.trim() || analyzing}
-              className="w-full mt-6 py-3 rounded-xl gradient-pastel text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-soft hover:shadow-glow transition-all flex items-center justify-center gap-2"
+              className="w-full mt-6 py-3 rounded-xl gradient-pastel text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-soft hover:shadow-glow hover:brightness-90 active:brightness-75 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
             >
               {analyzing ? (
                 <>

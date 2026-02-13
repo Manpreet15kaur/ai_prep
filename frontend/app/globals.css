@@ -17,9 +17,14 @@
 
 @layer utilities {
   .glass {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 32px rgba(255, 182, 193, 0.2);
   }
   
   .gradient-pastel {
@@ -30,13 +35,35 @@
     filter: brightness(0.8);
   }
   
+  .gradient-vibrant {
+    background: linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%);
+    box-shadow: 0 4px 20px rgba(255, 126, 95, 0.4);
+  }
+  
+  .gradient-vibrant:hover {
+    box-shadow: 0 8px 30px rgba(255, 126, 95, 0.6);
+  }
+  
   .card-glow {
     box-shadow: 0 4px 20px rgba(255, 182, 193, 0.15);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(255, 182, 193, 0.1);
   }
   
   .card-glow:hover {
-    box-shadow: 0 8px 30px rgba(255, 182, 193, 0.3);
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.25);
     transform: translateY(-4px);
+  }
+  
+  .card-bento {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 20px rgba(255, 182, 193, 0.12);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .card-bento:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 16px 48px rgba(139, 92, 246, 0.3);
   }
 }

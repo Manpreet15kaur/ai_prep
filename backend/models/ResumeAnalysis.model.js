@@ -57,12 +57,6 @@ const resumeAnalysisSchema = new mongoose.Schema({
   projectGaps: [{
     type: String
   }],
-  matchedCertifications: [{
-    type: String
-  }],
-  missingCertifications: [{
-    type: String
-  }],
   improvements: [{
     area: String,
     suggestion: String,
